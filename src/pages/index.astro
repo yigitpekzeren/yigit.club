@@ -1,0 +1,101 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="yigit.club — Dijital Bahçe">
+  
+  <!-- Üst Menü -->
+  <nav class="mb-12">
+    <div class="inline-flex items-center gap-4 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-500 shadow-sm">
+      <span class="text-black font-semibold text-lg tracking-tight">yigit<span class="text-[#386641]">.club</span></span>
+      <div class="w-px h-4 bg-gray-300 mx-1"></div>
+      <a href="#" class="hover:text-black transition-colors">Projeler</a>
+      <a href="#" class="hover:text-black transition-colors">Yazılar</a>
+      <a href="#" class="hover:text-black transition-colors">Okumalar</a>
+    </div>
+  </nav>
+
+  <!-- Bento Mozaik -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-[280px] gap-6">
+
+    <!-- 1. Karşılama Alanı (2x2) -->
+    <div class="col-span-1 md:col-span-2 row-span-1 md:row-span-2 p-8 flex flex-col justify-center">
+      <h1 class="text-3xl md:text-4xl font-serif-custom font-normal text-gray-900 leading-snug mb-6">
+        Selam, ben Yiğit 👋<br/> 
+        <span class="text-gray-500">Açık atölyeme hoş geldin.</span>
+      </h1>
+      <p class="text-lg md:text-xl font-serif-custom text-gray-500 leading-relaxed mb-4">
+        Kültürel miras koruma alanında akademik çalışmalar yürütüyor, aynı zamanda ahşapla bir şeyler üretmeyi seviyorum.
+      </p>
+      <p class="text-lg md:text-xl font-serif-custom text-gray-500 leading-relaxed">
+        Kalan vaktimde <span class="text-gray-900 font-medium">uzun mesafe koşuyor</span> ve okuyorum.
+      </p>
+    </div>
+
+    <!-- 2. Araştırma & Belgeleme (2x1) -->
+    <a href="#" class="group relative col-span-1 md:col-span-2 row-span-1 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
+      <div class="absolute inset-0 p-6 flex flex-col justify-between z-10 pointer-events-none">
+        <div class="flex justify-between items-start w-full">
+          <span class="text-xs font-medium text-gray-400">Yazı · Araştırma</span>
+          <span class="text-gray-400 group-hover:text-black transition-colors">↗</span>
+        </div>
+      </div>
+      <div class="absolute inset-0 bg-[#f8f9fa] flex items-center justify-center group-hover:-translate-y-4 transition-transform duration-500 ease-out">
+        <h3 class="text-2xl font-serif-custom text-gray-800">Kültürel Miras & Belgeleme</h3>
+      </div>
+      <div class="absolute bottom-0 left-0 w-full p-4 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
+        <p class="text-sm font-medium text-gray-900">3B tarama, fotogrametri ve LiDAR süreçleri üzerine saha notları.</p>
+      </div>
+    </a>
+
+    <!-- 3. Atölye (1x1) -->
+    <a href="#" class="group relative col-span-1 row-span-1 bg-[#fdfbf7] rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
+      <div class="absolute inset-0 p-4 flex flex-col justify-between z-10 pointer-events-none">
+        <span class="text-xs font-medium text-gray-400">Atölye · Üretim</span>
+      </div>
+      <div class="w-full h-full flex flex-col items-center justify-center p-6 group-hover:-translate-y-4 transition-transform duration-500 ease-out">
+        <span class="text-4xl mb-3">🎸</span>
+        <h3 class="text-lg font-serif-custom text-center leading-tight">Cigar Box Gitar<br/>Yapım Günlüğü</h3>
+      </div>
+      <div class="absolute bottom-0 left-0 w-full p-4 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
+        <p class="text-xs font-medium text-gray-900">Tamamen kendi başıma inşa ettiğim enstrümanın süreci.</p>
+      </div>
+    </a>
+
+    <!-- 4. Antrenman (1x1) -->
+    <a href="#" class="group relative col-span-1 row-span-1 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
+      <div class="absolute inset-0 p-4 flex flex-col justify-between z-10 pointer-events-none">
+        <span class="text-xs font-medium text-gray-400">Hareket · Koşu</span>
+      </div>
+      <div class="w-full h-full flex flex-col items-center justify-center p-6 group-hover:-translate-y-4 transition-transform duration-500 ease-out">
+        <span class="text-4xl mb-3">⏱️</span>
+        <h3 class="text-lg font-serif-custom text-center leading-tight">10K & Analog<br/>Antrenman</h3>
+      </div>
+      <div class="absolute bottom-0 left-0 w-full p-4 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
+        <p class="text-xs font-medium text-gray-900">Apple Watch SE 2 ile ritim yakalamak ve mesafe notları.</p>
+      </div>
+    </a>
+
+    <!-- 5. Kütüphane (1x1) -->
+    <a href="#" class="group relative col-span-1 row-span-1 bg-gray-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+      <div class="absolute inset-0 bg-[#2d3748] group-hover:scale-105 transition-transform duration-700 ease-out flex items-center justify-center p-6">
+         <span class="text-white/80 font-serif-custom text-center text-lg">Zemberekkuşu'nun<br/>Güncesi</span>
+      </div>
+      <div class="absolute bottom-0 left-0 p-4 w-full bg-gradient-to-t from-black/80 to-transparent">
+        <span class="text-xs text-white font-medium">Okuma Fragmanları</span>
+      </div>
+    </a>
+
+    <!-- 6. Teçhizat (1x1) -->
+    <a href="#" class="group relative col-span-1 row-span-1 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
+      <div class="w-full h-full flex flex-col items-center justify-center p-6 group-hover:-translate-y-4 transition-transform duration-500 ease-out">
+        <span class="text-4xl mb-3">⌚</span>
+        <h3 class="text-lg font-serif-custom text-center leading-tight">Casio & Opinel<br/>Koleksiyonu</h3>
+      </div>
+      <div class="absolute bottom-0 left-0 w-full p-3 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
+        <p class="text-xs font-medium text-gray-900">Gösterişsiz ve fonksiyonel tasarım felsefesi.</p>
+      </div>
+    </a>
+
+  </div>
+</Layout>
