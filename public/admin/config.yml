@@ -1,0 +1,22 @@
+backend:
+  name: github
+  repo: yigitpekzeren/yigit.club # Burayı kendi kullanıcı adınla değiştir
+  branch: main
+
+media_folder: "public/images"
+public_folder: "/images"
+
+collections:
+  - name: "notlar"
+    label: "Bahçe Notları & Yazılar"
+    folder: "src/pages/notlar"
+    create: true
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Sayfa Şablonu", name: "layout", widget: "hidden", default: "../../layouts/Layout.astro" }
+      - { label: "Başlık", name: "title", widget: "string" }
+      - { label: "Tarih", name: "date", widget: "datetime" }
+      - { label: "Kategori (Araştırma, Atölye, Koşu vs.)", name: "category", widget: "string" }
+      - { label: "Durum (Fide, Filiz, Daimi)", name: "stage", widget: "select", options: ["🌱 Fide", "🌿 Filiz", "🌳 Daimi"] }
+      - { label: "İçerik", name: "body", widget: "markdown" }
