@@ -9,12 +9,9 @@ const posts = allPosts.filter(
 const pageTitle = "Kategori: " + slug;
 
 export async function getStaticPaths() {
-  return [
-    { params: { slug: 'miras' } },
-    { params: { slug: 'hobiler' } },
-    { params: { slug: 'atolye' } },
-    { params: { slug: 'genel' } }
-  ];
+  const allPosts = await Astro.glob('../notlar/*.md');
+  const categories = [...new Set(allPosts.map((p) => p.frontmatter.category))];
+  return categories.map((cat) => ({ params: { slug: cat } }));
 }
 ---
 
