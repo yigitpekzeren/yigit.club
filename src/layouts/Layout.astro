@@ -3,6 +3,8 @@ interface Props {
   title: string;
 }
 const { title } = Astro.props;
+const allPosts = await Astro.glob('../pages/notlar/*.md');
+const categories = [...new Set(allPosts.map((p) => p.frontmatter.category))].sort();
 ---
 <!doctype html>
 <html lang="tr" class="bg-zinc-950 text-zinc-100">
@@ -16,9 +18,9 @@ const { title } = Astro.props;
       <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" class="font-semibold tracking-tight">yigit.club</a>
         <nav class="flex items-center gap-6 text-sm text-zinc-400">
-          <a href="/kategori/miras" class="hover:text-zinc-100">Miras</a>
-          <a href="/kategori/hobiler" class="hover:text-zinc-100">Hobiler</a>
-          <a href="/kategori/atolye" class="hover:text-zinc-100">Atölye</a>
+          {categories.map((cat) => (
+            <a href={"/kategori/" + cat} class="hover:text-zinc-100 capitalize">{cat}</a>
+          ))}
         </nav>
       </div>
     </header>
