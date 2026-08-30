@@ -2,7 +2,7 @@ backend:
   name: github
   repo: yigitpekzeren/yigit.club
   branch: main
-  app_id: Ov23liE8H0kPDdGexKSP
+  base_url: https://api.netlify.com #  app_id: Ov23liE8H0kPDdGexKSP
 
 media_folder: "public/images"
 public_folder: "/images"
