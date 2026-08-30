@@ -3,8 +3,6 @@ import Layout from '../../layouts/Layout.astro';
 
 const { slug } = Astro.params;
 const allPosts = await Astro.glob('../notlar/*.md');
-
-// Kategori eşleşmesi (büyük/küçük harf duyarsız)
 const posts = allPosts.filter(p => p.frontmatter.category?.toLowerCase() === slug?.toLowerCase());
 ---
 
@@ -24,7 +22,9 @@ const posts = allPosts.filter(p => p.frontmatter.category?.toLowerCase() === slu
           class="group relative bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between overflow-hidden hover:border-zinc-700 transition-all duration-300 min-h-[200px]"
         >
           <div class="flex items-center justify-between text-xs text-zinc-400 mb-4">
-            <span class="uppercase tracking-wider font-mono">{post.frontmatter.subcategory || post.frontmatter.category}</span>
+            <span class="uppercase tracking-wider font-mono">
+              {post.frontmatter.subcategory ? `${post.frontmatter.category} / ${post.frontmatter.subcategory}` : post.frontmatter.category}
+            </span>
             <span class="bg-zinc-800/80 px-2.5 py-1 rounded-full text-zinc-300">
               {post.frontmatter.stage}
             </span>
