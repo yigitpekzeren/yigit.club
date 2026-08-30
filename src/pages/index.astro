@@ -1,101 +1,177 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '../../layouts/Layout.astro';
+
+let isAuthenticated = false;
+let errorMessage = '';
+let successMessage = '';
+
+// Cookie kontrolü
+const cookieHeader = Astro.request.headers.get('cookie') || '';
+const match = cookieHeader.match(/admin_auth=true/);
+if (match) {
+  isAuthenticated = true;
+}
+
+// Form gönderildiğinde (Giriş veya Yazı Kaydetme)
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const action = formData.get('action');
+
+  // 1. Giriş İşlemi
+  if (action === 'login') {
+    const password = formData.get('password');
+    if (password === import.meta.env.ADMIN_PASSWORD) {
+      isAuthenticated = true;
+      // 1 günlük oturum çerezi set et
+      Astro.response.headers.set('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly; Secure; Max-Age=86400');
+    } else {
+      errorMessage = 'Hatalı şifre!';
+    }
+  }
+
+  // 2. Yeni Yazı / Kayıt İşlemi (GitHub API ile Markdown Oluşturma)
+  if (action === 'create_post' && isAuthenticated) {
+    const title = formData.get('title')?.toString().trim();
+    const category = formData.get('category')?.toString().trim();
+    const subcategory = formData.get('subcategory')?.toString().trim() || '';
+    const stage = formData.get('stage')?.toString();
+    const content = formData.get('content')?.toString();
+
+    if (!title || !category || !content) {
+      errorMessage = 'Başlık, kategori ve içerik alanları zorunludur.';
+    } else {
+      // Dosya adı için URL dostu slug oluşturma
+      const slug = title
+        .toLowerCase()
+        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+        .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-');
+
+      const date = new Date().toISOString().split('T')[0];
+      const filePath = `src/pages/notlar/${slug}.md`;
+
+      // Markdown dosya içeriği
+      const fileContent = `---
+layout: "../../layouts/Layout.astro"
+title: "${title}"
+date: ${date}
+category: "${category}"
+subcategory: "${subcategory}"
+stage: "${stage}"
 ---
 
-<Layout title="yigit.club — Dijital Bahçe">
-  
-  <!-- Üst Menü -->
-  <nav class="mb-12">
-    <div class="inline-flex items-center gap-4 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-500 shadow-sm">
-      <span class="text-black font-semibold text-lg tracking-tight">yigit<span class="text-[#386641]">.club</span></span>
-      <div class="w-px h-4 bg-gray-300 mx-1"></div>
-      <a href="#" class="hover:text-black transition-colors">Projeler</a>
-      <a href="#" class="hover:text-black transition-colors">Yazılar</a>
-      <a href="#" class="hover:text-black transition-colors">Okumalar</a>
-    </div>
-  </nav>
+${content}
+`;
 
-  <!-- Bento Mozaik -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 auto-rows-[280px] gap-6">
+      // GitHub API İstek Detayları
+      const repo = 'yigitpekzeren/yigit.club';
+      const token = import.meta.env.GITHUB_TOKEN;
+      const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
 
-    <!-- 1. Karşılama Alanı (2x2) -->
-    <div class="col-span-1 md:col-span-2 row-span-1 md:row-span-2 p-8 flex flex-col justify-center">
-      <h1 class="text-3xl md:text-4xl font-serif-custom font-normal text-gray-900 leading-snug mb-6">
-        Selam, ben Yiğit 👋<br/> 
-        <span class="text-gray-500">Açık atölyeme hoş geldin.</span>
-      </h1>
-      <p class="text-lg md:text-xl font-serif-custom text-gray-500 leading-relaxed mb-4">
-        Kültürel miras koruma alanında akademik çalışmalar yürütüyor, aynı zamanda ahşapla bir şeyler üretmeyi seviyorum.
-      </p>
-      <p class="text-lg md:text-xl font-serif-custom text-gray-500 leading-relaxed">
-        Kalan vaktimde <span class="text-gray-900 font-medium">uzun mesafe koşuyor</span> ve okuyorum.
-      </p>
-    </div>
+      try {
+        const response = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+          },
+          body: JSON.stringify({
+            message: `Yeni yazı eklendi: ${title}`,
+            content: Buffer.from(fileContent).toString('base64'),
+            branch: 'main'
+          })
+        });
 
-    <!-- 2. Araştırma & Belgeleme (2x1) -->
-    <a href="#" class="group relative col-span-1 md:col-span-2 row-span-1 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-      <div class="absolute inset-0 p-6 flex flex-col justify-between z-10 pointer-events-none">
-        <div class="flex justify-between items-start w-full">
-          <span class="text-xs font-medium text-gray-400">Yazı · Araştırma</span>
-          <span class="text-gray-400 group-hover:text-black transition-colors">↗</span>
+        if (response.ok) {
+          successMessage = 'Yazı başarıyla oluşturuldu ve GitHub\'a kaydedildi! Vercel birazdan yayına alacak.';
+        } else {
+          const errData = await response.json();
+          errorMessage = `GitHub Kayıt Hatası: ${errData.message || 'Bilinmeyen hata'}`;
+        }
+      } catch (err) {
+        errorMessage = 'Bağlantı hatası oluştu.';
+      }
+    }
+  }
+}
+---
+
+<Layout title="Yönetim Paneli">
+  <div class="max-w-xl mx-auto py-8">
+    <h1 class="text-2xl font-bold tracking-tight mb-6">Yönetim Tezgâhı</h1>
+
+    {errorMessage && (
+      <div class="bg-red-950/50 border border-red-800 text-red-200 px-4 py-3 rounded-xl mb-6 text-sm">
+        {errorMessage}
+      </div>
+    )}
+
+    {successMessage && (
+      <div class="bg-emerald-950/50 border border-emerald-800 text-emerald-200 px-4 py-3 rounded-xl mb-6 text-sm">
+        {successMessage}
+      </div>
+    )}
+
+    {!isAuthenticated ? (
+      <!-- Giriş Formu -->
+      <form method="POST" class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4">
+        <input type="hidden" name="action" value="login" />
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">Admin Şifresi</label>
+          <input 
+            type="password" 
+            name="password" 
+            required 
+            class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-zinc-600"
+            placeholder="Şifrenizi girin..."
+          />
         </div>
-      </div>
-      <div class="absolute inset-0 bg-[#f8f9fa] flex items-center justify-center group-hover:-translate-y-4 transition-transform duration-500 ease-out">
-        <h3 class="text-2xl font-serif-custom text-gray-800">Kültürel Miras & Belgeleme</h3>
-      </div>
-      <div class="absolute bottom-0 left-0 w-full p-4 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
-        <p class="text-sm font-medium text-gray-900">3B tarama, fotogrametri ve LiDAR süreçleri üzerine saha notları.</p>
-      </div>
-    </a>
+        <button type="submit" class="w-full bg-zinc-100 text-zinc-950 font-medium py-2.5 rounded-xl hover:bg-zinc-200 transition-colors">
+          Giriş Yap
+        </button>
+      </form>
+    ) : (
+      <!-- Yazı Ekleme Formu -->
+      <form method="POST" class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4">
+        <input type="hidden" name="action" value="create_post" />
 
-    <!-- 3. Atölye (1x1) -->
-    <a href="#" class="group relative col-span-1 row-span-1 bg-[#fdfbf7] rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-      <div class="absolute inset-0 p-4 flex flex-col justify-between z-10 pointer-events-none">
-        <span class="text-xs font-medium text-gray-400">Atölye · Üretim</span>
-      </div>
-      <div class="w-full h-full flex flex-col items-center justify-center p-6 group-hover:-translate-y-4 transition-transform duration-500 ease-out">
-        <span class="text-4xl mb-3">🎸</span>
-        <h3 class="text-lg font-serif-custom text-center leading-tight">Cigar Box Gitar<br/>Yapım Günlüğü</h3>
-      </div>
-      <div class="absolute bottom-0 left-0 w-full p-4 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
-        <p class="text-xs font-medium text-gray-900">Tamamen kendi başıma inşa ettiğim enstrümanın süreci.</p>
-      </div>
-    </a>
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">Yazı Başlığı</label>
+          <input type="text" name="title" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-zinc-600" />
+        </div>
 
-    <!-- 4. Antrenman (1x1) -->
-    <a href="#" class="group relative col-span-1 row-span-1 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-      <div class="absolute inset-0 p-4 flex flex-col justify-between z-10 pointer-events-none">
-        <span class="text-xs font-medium text-gray-400">Hareket · Koşu</span>
-      </div>
-      <div class="w-full h-full flex flex-col items-center justify-center p-6 group-hover:-translate-y-4 transition-transform duration-500 ease-out">
-        <span class="text-4xl mb-3">⏱️</span>
-        <h3 class="text-lg font-serif-custom text-center leading-tight">10K & Analog<br/>Antrenman</h3>
-      </div>
-      <div class="absolute bottom-0 left-0 w-full p-4 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
-        <p class="text-xs font-medium text-gray-900">Apple Watch SE 2 ile ritim yakalamak ve mesafe notları.</p>
-      </div>
-    </a>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">Kategori</label>
+            <input type="text" name="category" placeholder="örn: miras, hobiler" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-zinc-600" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">Alt Kategori (İsteğe bağlı)</label>
+            <input type="text" name="subcategory" placeholder="örn: arkeoloji, saatler" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-zinc-600" />
+          </div>
+        </div>
 
-    <!-- 5. Kütüphane (1x1) -->
-    <a href="#" class="group relative col-span-1 row-span-1 bg-gray-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-      <div class="absolute inset-0 bg-[#2d3748] group-hover:scale-105 transition-transform duration-700 ease-out flex items-center justify-center p-6">
-         <span class="text-white/80 font-serif-custom text-center text-lg">Zemberekkuşu'nun<br/>Güncesi</span>
-      </div>
-      <div class="absolute bottom-0 left-0 p-4 w-full bg-gradient-to-t from-black/80 to-transparent">
-        <span class="text-xs text-white font-medium">Okuma Fragmanları</span>
-      </div>
-    </a>
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">Kahve Aşaması</label>
+          <select name="stage" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-zinc-600">
+            <option value="🫘 Çekirdek">🫘 Çekirdek (Taslak)</option>
+            <option value="⏳ Demleniyor">⏳ Demleniyor (Üzerinde çalışılıyor)</option>
+            <option value="☕ Fincanda">☕ Fincanda (Tamamlandı)</option>
+          </select>
+        </div>
 
-    <!-- 6. Teçhizat (1x1) -->
-    <a href="#" class="group relative col-span-1 row-span-1 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-      <div class="w-full h-full flex flex-col items-center justify-center p-6 group-hover:-translate-y-4 transition-transform duration-500 ease-out">
-        <span class="text-4xl mb-3">⌚</span>
-        <h3 class="text-lg font-serif-custom text-center leading-tight">Casio & Opinel<br/>Koleksiyonu</h3>
-      </div>
-      <div class="absolute bottom-0 left-0 w-full p-3 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out border-t border-gray-100">
-        <p class="text-xs font-medium text-gray-900">Gösterişsiz ve fonksiyonel tasarım felsefesi.</p>
-      </div>
-    </a>
+        <div>
+          <label class="block text-xs uppercase tracking-wider font-mono text-zinc-400 mb-2">İçerik (Markdown)</label>
+          <textarea name="content" rows="8" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-100 font-mono text-sm focus:outline-none focus:border-zinc-600"></textarea>
+        </div>
 
+        <button type="submit" class="w-full bg-zinc-100 text-zinc-950 font-medium py-2.5 rounded-xl hover:bg-zinc-200 transition-colors">
+          Yazıyı Yayınla (GitHub'a Kaydet)
+        </button>
+      </form>
+    )}
   </div>
 </Layout>
