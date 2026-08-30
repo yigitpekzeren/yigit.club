@@ -2,6 +2,7 @@ backend:
   name: github
   repo: yigitpekzeren/yigit.club # Burayı kendi kullanıcı adınla değiştir
   branch: main
+  app_id: Ov23liE8H0kPDdGexKSP
 
 media_folder: "public/images"
 public_folder: "/images"
