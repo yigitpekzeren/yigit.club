@@ -1,7 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
 const allPosts = await Astro.glob('./notlar/*.md');
-const sortedPosts = allPosts.sort((a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime());
+const sortedPosts = allPosts
+  .sort((a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime())
+  .map((post, index) => ({ ...post, isFeatured: index === 0 }));
 ---
 
 <Layout title="Ana Sayfa">
@@ -10,15 +12,16 @@ const sortedPosts = allPosts.sort((a, b) => new Date(b.frontmatter.date).getTime
     <p class="text-sm text-zinc-400">Düşünceler, taslaklar ve demlenen yazılar.</p>
   </header>
 
-  {sortedPosts.length === 0 ? (
+  {sortedPosts.length === 0 && (
     <p class="text-zinc-500 text-sm">Henüz yazı yok.</p>
-  ) : (
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {sortedPosts.map((post, index) => (
-        
-          href={post.url}
-          class={`group relative bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between overflow-hidden hover:border-zinc-700 transition-all duration-300 min-h-[180px] ${index === 0 ? 'md:col-span-2' : ''}`}
-        >
+  )}
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {sortedPosts.map((post) => {
+      const base = "group relative bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 flex flex-col justify-between overflow-hidden hover:border-zinc-700 transition-all duration-300 min-h-[180px]";
+      const cardClass = post.isFeatured ? base + " md:col-span-2" : base;
+      return (
+        <a href={post.url} class={cardClass}>
           <div class="flex items-center justify-between text-xs text-zinc-400 mb-4">
             <span class="uppercase tracking-wider font-mono">{post.frontmatter.category}</span>
             <span class="bg-zinc-800/80 px-2.5 py-1 rounded-full text-zinc-300">{post.frontmatter.stage}</span>
@@ -28,7 +31,7 @@ const sortedPosts = allPosts.sort((a, b) => new Date(b.frontmatter.date).getTime
             <p class="text-xs text-zinc-500 mt-2 font-mono">{new Date(post.frontmatter.date).toLocaleDateString('tr-TR')}</p>
           </div>
         </a>
-      ))}
-    </div>
-  )}
+      );
+    })}
+  </div>
 </Layout>
