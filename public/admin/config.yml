@@ -37,7 +37,7 @@ collections:
       - { label: "Şablon", name: "layout", widget: "hidden", default: "../../layouts/PostLayout.astro" }
       - { label: "Başlık", name: "title", widget: "string" }
       - { label: "Tarih", name: "date", widget: "datetime" }
-      - { label: "Ana Kategori", name: "category", widget: "select", options: ["miras", "hobiler", "atolye", "genel"] }
+      - { label: "Ana Kategori", name: "category", widget: "string", hint: "küçük harf, boşluksuz (örn: koşu)" }
       - { label: "Alt Kategori", name: "subcategory", widget: "string", required: false }
       - { label: "Kahve Aşaması", name: "stage", widget: "select", options: ["🫘 Çekirdek", "⏳ Demleniyor", "☕ Fincanda"] }
       - { label: "İçerik", name: "body", widget: "markdown" }
