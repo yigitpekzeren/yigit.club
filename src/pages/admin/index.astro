@@ -1,50 +1,53 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { Buffer } from 'node:buffer';
 
 let isAuthenticated = false;
 let errorMessage = '';
 let successMessage = '';
 
+// Güvenli çerez kontrolü
 const cookieHeader = Astro.request.headers.get('cookie') || '';
 if (/admin_auth=true/.test(cookieHeader)) {
   isAuthenticated = true;
 }
 
 if (Astro.request.method === 'POST') {
-  const formData = await Astro.request.formData();
-  const action = formData.get('action');
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get('action');
 
-  if (action === 'login') {
-    const password = formData.get('password');
-    if (password === import.meta.env.ADMIN_PASSWORD) {
-      isAuthenticated = true;
-      Astro.response.headers.set('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly; Secure; Max-Age=86400');
-    } else {
-      errorMessage = 'Hatalı şifre!';
+    if (action === 'login') {
+      const password = formData.get('password');
+      if (password === import.meta.env.ADMIN_PASSWORD) {
+        isAuthenticated = true;
+        Astro.response.headers.set('Set-Cookie', 'admin_auth=true; Path=/; HttpOnly; Secure; Max-Age=86400');
+      } else {
+        errorMessage = 'Hatalı şifre!';
+      }
     }
-  }
 
-  if (action === 'create_post' && isAuthenticated) {
-    const title = formData.get('title')?.toString().trim();
-    const category = formData.get('category')?.toString().trim();
-    const subcategory = formData.get('subcategory')?.toString().trim() || '';
-    const stage = formData.get('stage')?.toString();
-    const content = formData.get('content')?.toString();
+    if (action === 'create_post' && isAuthenticated) {
+      const title = formData.get('title')?.toString().trim();
+      const category = formData.get('category')?.toString().trim();
+      const subcategory = formData.get('subcategory')?.toString().trim() || '';
+      const stage = formData.get('stage')?.toString();
+      const content = formData.get('content')?.toString();
 
-    if (!title || !category || !content) {
-      errorMessage = 'Başlık, kategori ve içerik alanları zorunludur.';
-    } else {
-      const slug = title
-        .toLowerCase()
-        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
-        .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-');
+      if (!title || !category || !content) {
+        errorMessage = 'Başlık, kategori ve içerik alanları zorunludur.';
+      } else {
+        const slug = title
+          .toLowerCase()
+          .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+          .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-');
 
-      const date = new Date().toISOString().split('T')[0];
-      const filePath = `src/pages/notlar/${slug}.md`;
+        const date = new Date().toISOString().split('T')[0];
+        const filePath = `src/pages/notlar/${slug}.md`;
 
-      const fileContent = `---
+        const fileContent = `---
 layout: "../../layouts/Layout.astro"
 title: "${title}"
 date: ${date}
@@ -56,11 +59,10 @@ stage: "${stage}"
 ${content}
 `;
 
-      const repo = 'yigitpekzeren/yigit.club';
-      const token = import.meta.env.GITHUB_TOKEN;
-      const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+        const repo = 'yigitpekzeren/yigit.club';
+        const token = import.meta.env.GITHUB_TOKEN;
+        const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
 
-      try {
         const response = await fetch(url, {
           method: 'PUT',
           headers: {
@@ -77,15 +79,15 @@ ${content}
         });
 
         if (response.ok) {
-          successMessage = 'Yazı başarıyla oluşturuldu ve GitHub\'a kaydedildi! Vercel saniyeler içinde yayına alacak.';
+          successMessage = 'Yazı başarıyla oluşturuldu ve GitHub\'a kaydedildi! Vercel birazdan yayına alacak.';
         } else {
           const errData = await response.json();
           errorMessage = `GitHub Kayıt Hatası: ${errData.message || 'Bilinmeyen hata'}`;
         }
-      } catch (err) {
-        errorMessage = 'Bağlantı hatası oluştu.';
       }
     }
+  } catch (err) {
+    errorMessage = 'İşlem sırasında bir hata oluştu.';
   }
 }
 ---
