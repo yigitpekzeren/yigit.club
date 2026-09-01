@@ -60,6 +60,16 @@
   font-size: 16px;
 }
 
+/* select açılınca native popup fazla büyük görünüyordu; alan etiketleriyle aynı puntoya indir. */
+/* not: select'ler iOS'un focus-zoom davranışını tetiklemez, 16px zorunluluğu yok. */
+.admin-dashboard select {
+  font-size: 13px;
+}
+
+#f-category {
+  text-transform: lowercase;
+}
+
 .admin-dashboard input[type="datetime-local"] {
   padding-left: 8px;
   padding-right: 8px;
