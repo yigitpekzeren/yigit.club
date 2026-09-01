@@ -68,7 +68,7 @@ async function fetchAllNotlar() {
 
   const posts = await Promise.all(
     jsonFiles.map(async (f) => {
-      const res = await fetch(f.download_url);
+      const res = await fetch(`${f.download_url}?t=${Date.now()}`);
       const data = await res.json();
       return { ...data, slug: f.name.replace(/\.json$/, "") };
     })

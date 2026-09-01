@@ -211,7 +211,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=6"></script>
+    <script src="../js/site.js?v=7"></script>
     <script>
       initTheme();
       initLogoTyping();
@@ -924,7 +924,7 @@ async function loadPosts() {
     const files = (await ghListFolder(POSTS_FOLDER)).filter((f) => f.name.endsWith(".json"));
     const posts = await Promise.all(
       files.map(async (f) => {
-        const res = await fetch(f.download_url);
+        const res = await fetch(`${f.download_url}?t=${Date.now()}`);
         const data = await res.json();
         return { ...data, slug: f.name.replace(/\.json$/, ""), sha: f.sha };
       })
