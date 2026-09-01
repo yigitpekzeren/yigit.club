@@ -19,10 +19,14 @@
 
     <h1 style="margin-bottom: 24px;">Atölye</h1>
 
-    <div class="grid">
-      <!-- Bu kategorideki yazılar buraya eklenecek -->
-      <p style="color:#a1a1aa;">Bu kategoride henüz yazı yok.</p>
+    <div class="grid" id="posts-grid" data-category="atolye">
+      <p style="color:#a1a1aa;">Yükleniyor...</p>
     </div>
+
+    <script src="../js/site.js"></script>
+    <script>
+      renderGrid("#posts-grid", { pathPrefix: "../" });
+    </script>
 
   </body>
 </html>

@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>yigit.club</title>
+    <title>Yükleniyor... | yigit.club</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
 
@@ -17,13 +18,13 @@
       </nav>
     </header>
 
-    <div class="grid" id="posts-grid">
+    <article id="post-content">
       <p style="color:#a1a1aa;">Yükleniyor...</p>
-    </div>
+    </article>
 
     <script src="js/site.js"></script>
     <script>
-      renderGrid("#posts-grid", { pathPrefix: "" });
+      renderPost("#post-content");
     </script>
 
   </body>

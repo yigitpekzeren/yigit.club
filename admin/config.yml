@@ -23,21 +23,21 @@ auth:
 logo_url: https://decapbridge.com/decapcms-with-bridge.svg
 site_url: https://mellifluous-eclair-b32533.netlify.app
 
-media_folder: "public/images"
+media_folder: "images"
 public_folder: "/images"
 
 collections:
   - name: "notlar"
     label: "Bahçe Notları & Yazılar"
-    folder: "src/pages/notlar"
+    folder: "notlar-data"
     create: true
-    extension: "md"
-    format: "frontmatter"
+    extension: "json"
+    format: "json"
     fields:
-      - { label: "Şablon", name: "layout", widget: "hidden", default: "../../layouts/PostLayout.astro" }
       - { label: "Başlık", name: "title", widget: "string" }
       - { label: "Tarih", name: "date", widget: "datetime" }
-      - { label: "Ana Kategori", name: "category", widget: "string", hint: "küçük harf, boşluksuz (örn: koşu)" }
+      - { label: "Ana Kategori", name: "category", widget: "select", options: ["genel", "miras", "hobiler", "atolye"] }
       - { label: "Alt Kategori", name: "subcategory", widget: "string", required: false }
       - { label: "Kahve Aşaması", name: "stage", widget: "select", options: ["🫘 Çekirdek", "⏳ Demleniyor", "☕ Fincanda"] }
+      - { label: "Görsel", name: "image", widget: "image", required: false }
       - { label: "İçerik", name: "body", widget: "markdown" }

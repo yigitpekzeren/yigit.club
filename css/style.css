@@ -89,3 +89,35 @@ nav a:hover {
   font-size: 17px;
   font-weight: 500;
 }
+
+.icerik {
+  line-height: 1.7;
+  color: #d4d4d8;
+}
+
+.icerik h2,
+.icerik h3 {
+  color: #f4f4f5;
+  margin: 32px 0 12px;
+}
+
+.icerik p {
+  margin: 0 0 16px;
+}
+
+.icerik ul,
+.icerik ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.icerik a {
+  color: #f4f4f5;
+}
+
+.icerik code {
+  background-color: #18181b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+}
