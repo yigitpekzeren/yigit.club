@@ -256,15 +256,15 @@ function initTheme() {
 
 /* ---------- logo yazma animasyonu ---------- */
 
-function initLogoTyping() {
+function initLogoTyping(boldFull, italicFull) {
   const el = document.getElementById("site-logo");
   if (!el) return;
   const boldEl = el.querySelector(".logo-bold");
   const italicEl = el.querySelector(".logo-italic");
   if (!boldEl || !italicEl) return;
 
-  const boldFull = "yigit.";
-  const italicFull = "club";
+  boldFull = boldFull || "yigit.";
+  italicFull = italicFull || "club";
 
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     boldEl.textContent = boldFull;

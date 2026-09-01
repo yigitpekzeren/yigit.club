@@ -78,8 +78,6 @@
   font-size: 13px;
 }
 
-.admin-form button[type="submit"],
-#ozet-save-btn,
 .btn-secondary,
 .btn-danger,
 .admin-post-actions button {
@@ -93,41 +91,62 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
 }
 
-.admin-form button[type="submit"],
-#ozet-save-btn {
-  background-color: var(--text);
-  color: var(--bg);
-  padding: 12px 28px;
-  font-family: var(--font-display);
+/* yayınla / taslak / iptal / özeti kaydet / çıkış yap: tek bir buton ailesi - aynı font, şekil, boyut */
+#submit-btn,
+#draft-save-btn,
+#cancel-edit-btn,
+#ozet-save-btn,
+#logout-btn {
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-family: inherit;
   font-weight: 600;
-  font-style: italic;
-  font-size: 16px;
-  letter-spacing: 0.01em;
+  font-size: 14px;
+  line-height: 1.2;
+  border: 1px solid var(--border);
+  background-color: transparent;
+  color: var(--text);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
 }
 
-.admin-form button[type="submit"]:hover:not(:disabled),
-#ozet-save-btn:hover:not(:disabled) {
+#submit-btn:hover:not(:disabled),
+#draft-save-btn:hover:not(:disabled),
+#cancel-edit-btn:hover:not(:disabled),
+#ozet-save-btn:hover:not(:disabled),
+#logout-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
-.admin-form button[type="submit"]:active:not(:disabled),
-#ozet-save-btn:active:not(:disabled) {
+#submit-btn:active:not(:disabled),
+#draft-save-btn:active:not(:disabled),
+#cancel-edit-btn:active:not(:disabled),
+#ozet-save-btn:active:not(:disabled),
+#logout-btn:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
-.admin-form button[type="submit"]:disabled,
-#ozet-save-btn:disabled {
+#submit-btn:disabled,
+#draft-save-btn:disabled,
+#cancel-edit-btn:disabled,
+#ozet-save-btn:disabled,
+#logout-btn:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
-#submit-btn,
-#draft-save-btn {
-  padding: 12px 28px;
-  font-size: 16px;
+#submit-btn {
+  background-color: var(--text);
+  color: var(--bg);
+  border-color: transparent;
+}
+
+#logout-btn {
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .btn-secondary {
@@ -150,11 +169,10 @@
   border-color: var(--danger-text);
 }
 
-.admin-topbar {
+.admin-bottombar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  justify-content: flex-end;
+  margin-top: 32px;
 }
 
 .admin-ozet-section,
@@ -211,10 +229,6 @@
 
 .admin-drafts-section[open] summary {
   margin-bottom: 12px;
-}
-
-.admin-topbar h1.logo {
-  font-size: 22px;
 }
 
 .admin-ozet-section summary h2,

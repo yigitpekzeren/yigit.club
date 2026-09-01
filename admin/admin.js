@@ -237,7 +237,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=8"></script>
+    <script src="../js/site.js?v=9"></script>
     <script>
       initTheme();
       initLogoTyping();
@@ -500,11 +500,6 @@ async function onTokenSubmit(e) {
 function dashboardHTML() {
   return `
     <div class="admin-dashboard">
-      <div class="admin-topbar">
-        <h1 class="logo"><span class="logo-bold">admin.</span><span class="logo-italic">club</span><span class="logo-cursor"></span></h1>
-        <button id="logout-btn" class="btn-secondary">Çıkış Yap</button>
-      </div>
-
       <div class="admin-columns-3">
         <section class="admin-col-meta">
           <details class="admin-meta-accordion" id="meta-accordion" open>
@@ -609,6 +604,10 @@ function dashboardHTML() {
             </div>
           </details>
         </section>
+      </div>
+
+      <div class="admin-bottombar">
+        <button id="logout-btn">Çıkış Yap</button>
       </div>
     </div>
   `;
