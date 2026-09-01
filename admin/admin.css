@@ -84,18 +84,38 @@
 .btn-danger,
 .admin-post-actions button {
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 500;
   border: 1px solid transparent;
   font-family: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
 }
 
 .admin-form button[type="submit"],
 #ozet-save-btn {
   background-color: var(--text);
   color: var(--bg);
+  padding: 12px 28px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: italic;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.admin-form button[type="submit"]:hover:not(:disabled),
+#ozet-save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.admin-form button[type="submit"]:active:not(:disabled),
+#ozet-save-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .admin-form button[type="submit"]:disabled,
@@ -110,10 +130,18 @@
   color: var(--text);
 }
 
+.btn-secondary:hover {
+  border-color: var(--border-strong);
+}
+
 .btn-danger {
   background-color: transparent;
   border-color: var(--danger-border);
   color: var(--danger-text);
+}
+
+.btn-danger:hover {
+  border-color: var(--danger-text);
 }
 
 .admin-topbar {
@@ -123,7 +151,8 @@
   margin-bottom: 24px;
 }
 
-.admin-ozet-section {
+.admin-ozet-section,
+.admin-drafts-section {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px 20px;
@@ -131,25 +160,29 @@
 }
 
 .admin-ozet-section summary,
-.admin-meta-accordion summary {
+.admin-meta-accordion summary,
+.admin-drafts-section summary {
   cursor: pointer;
   list-style: none;
 }
 
 .admin-ozet-section summary::-webkit-details-marker,
-.admin-meta-accordion summary::-webkit-details-marker {
+.admin-meta-accordion summary::-webkit-details-marker,
+.admin-drafts-section summary::-webkit-details-marker {
   display: none;
 }
 
 .admin-ozet-section summary h2,
-.admin-meta-accordion summary h2 {
+.admin-meta-accordion summary h2,
+.admin-drafts-section summary h2 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
 .admin-ozet-section summary h2::before,
-.admin-meta-accordion summary h2::before {
+.admin-meta-accordion summary h2::before,
+.admin-drafts-section summary h2::before {
   content: "▸";
   font-size: 13px;
   color: var(--muted-2);
@@ -157,7 +190,8 @@
 }
 
 .admin-ozet-section[open] summary h2::before,
-.admin-meta-accordion[open] summary h2::before {
+.admin-meta-accordion[open] summary h2::before,
+.admin-drafts-section[open] summary h2::before {
   transform: rotate(90deg);
 }
 
@@ -169,17 +203,70 @@
   margin-bottom: 12px;
 }
 
+.admin-drafts-section[open] summary {
+  margin-bottom: 12px;
+}
+
 .admin-topbar h1.logo {
   font-size: 22px;
 }
 
 .admin-ozet-section summary h2,
 .admin-meta-accordion summary h2,
+.admin-drafts-section summary h2,
 .admin-col-archive h2 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: 0.01em;
   font-size: 19px;
+}
+
+.draft-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.draft-item:first-child {
+  border-top: none;
+}
+
+.draft-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.draft-item-info .admin-post-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.draft-item-actions button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.draft-item-actions .btn-danger {
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 .admin-columns-3 {

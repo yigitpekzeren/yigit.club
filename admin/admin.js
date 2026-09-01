@@ -1,6 +1,7 @@
 const REPO = "yigitpekzeren/yigit.club";
 const BRANCH = "main";
 const POSTS_FOLDER = "notlar-data";
+const DRAFTS_FOLDER = "taslaklar-data";
 const IMAGES_FOLDER = "images";
 const KATEGORILER_DOSYASI = "kategoriler.json";
 const OZET_DOSYASI = "ozet.json";
@@ -8,8 +9,8 @@ const TOKEN_KEY = "yigitclub_admin_token";
 const CROP_W = 320;
 const CROP_H = 240;
 
-const state = { posts: [], categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null };
-const uiState = { mode: "new-post", targetSlug: null, targetSha: null, targetPost: null, slugTouched: false, editingEntryIndex: null };
+const state = { posts: [], drafts: [], categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null };
+const uiState = { mode: "new-post", targetSlug: null, targetSha: null, targetPost: null, slugTouched: false, editingEntryIndex: null, draftSlug: null, draftSha: null };
 const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, naturalW: 0, naturalH: 0, dragging: false, lastX: 0, lastY: 0 };
 
 function escapeHtml(str) {
@@ -577,6 +578,7 @@ function dashboardHTML() {
           <p id="form-error" style="color:#f87171; min-height:18px;"></p>
           <div class="admin-form-actions">
             <button type="submit" form="post-form" id="submit-btn">Yayınla</button>
+            <button type="button" id="draft-save-btn" class="btn-secondary">Taslak Olarak Kaydet</button>
             <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
           </div>
         </section>
@@ -584,6 +586,11 @@ function dashboardHTML() {
         <section class="admin-col-archive">
           <h2>Arşiv</h2>
           <div id="archive-root"><p style="color:#a1a1aa;">Yükleniyor...</p></div>
+
+          <details class="admin-drafts-section">
+            <summary><h2>Taslaklar</h2></summary>
+            <div id="drafts-root"><p style="color:#a1a1aa;">Yükleniyor...</p></div>
+          </details>
 
           <details class="admin-ozet-section">
             <summary><h2>Ana Sayfa Özeti</h2></summary>
@@ -677,6 +684,188 @@ function archiveExpandedHTML(p) {
   `;
 }
 
+function draftsHTML() {
+  if (state.drafts.length === 0) {
+    return '<p style="color:#a1a1aa;">Taslak yok.</p>';
+  }
+  return state.drafts
+    .map(
+      (d) => `
+    <div class="draft-item">
+      <div class="draft-item-info">
+        <span class="admin-post-title">${escapeHtml(d.title || "(başlıksız)")}</span>
+        <span class="admin-post-meta">${escapeHtml(d.category || "genel")}</span>
+      </div>
+      <div class="draft-item-actions">
+        <button type="button" data-action="edit-draft" data-slug="${escapeHtml(d.slug)}">Düzenle</button>
+        <button type="button" class="btn-danger" data-action="delete-draft" data-slug="${escapeHtml(d.slug)}" data-sha="${escapeHtml(d.sha)}">Sil</button>
+      </div>
+    </div>
+  `
+    )
+    .join("");
+}
+
+function renderDrafts() {
+  document.getElementById("drafts-root").innerHTML = draftsHTML();
+}
+
+function onDraftsClick(e) {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  const { action, slug, sha } = btn.dataset;
+  if (action === "edit-draft") {
+    startEditDraft(slug);
+  } else if (action === "delete-draft") {
+    handleDeleteDraft(slug, sha);
+  }
+}
+
+async function loadDrafts() {
+  try {
+    const files = (await ghListFolder(DRAFTS_FOLDER)).filter((f) => f.name.endsWith(".json"));
+    const drafts = await Promise.all(
+      files.map(async (f) => {
+        const res = await fetch(`${f.download_url}?t=${Date.now()}`);
+        const data = await res.json();
+        return { ...data, slug: f.name.replace(/\.json$/, ""), sha: f.sha };
+      })
+    );
+    drafts.sort((a, b) => new Date(b.date) - new Date(a.date));
+    state.drafts = drafts;
+  } catch (e) {
+    state.drafts = [];
+  }
+}
+
+async function handleSaveDraft() {
+  const title = document.getElementById("f-title").value.trim();
+  let slug = document.getElementById("f-slug").value.trim();
+  if (!title || !slug) {
+    showToast("Taslak için başlık ve slug gerekli.", true);
+    return;
+  }
+  slug = slugify(slug);
+  const category = document.getElementById("f-category").value;
+  const subcategory = document.getElementById("f-subcategory").value.trim();
+  const stage = document.getElementById("f-stage").value;
+  const body = document.getElementById("f-body").value;
+  const datetimeLocal = document.getElementById("f-datetime").value;
+  const isoDatetime = datetimeLocal ? new Date(datetimeLocal).toISOString() : new Date().toISOString();
+  const imageCaption = document.getElementById("f-image-caption").value.trim();
+
+  const draftBtn = document.getElementById("draft-save-btn");
+  draftBtn.disabled = true;
+  const originalLabel = draftBtn.textContent;
+  draftBtn.textContent = "Kaydediliyor...";
+
+  try {
+    let image = (uiState.targetPost && uiState.targetPost.image) || "";
+    if (category === "fotograf") {
+      const fileInput = document.getElementById("f-photo-file");
+      if (!state.croppedBlob && fileInput.files[0] && cropState.img) {
+        state.croppedBlob = await cropToBlob();
+      }
+      if (state.croppedBlob) {
+        const file = new File([state.croppedBlob], `${slug}.jpg`, { type: "image/jpeg" });
+        image = await uploadImage(file);
+      }
+    }
+
+    const path = `${DRAFTS_FOLDER}/${slug}.json`;
+    const sha = uiState.draftSlug === slug ? uiState.draftSha : (await ghGetFile(path))?.sha;
+    const draft = { title, date: isoDatetime, category, subcategory, stage, image, imageCaption, body };
+    const content = utf8ToBase64(JSON.stringify(draft, null, 2) + "\n");
+    const res = await ghPutFile(path, content, `Taslak kaydet: ${slug}`, sha);
+
+    uiState.draftSlug = slug;
+    uiState.draftSha = res.content.sha;
+
+    await loadDrafts();
+    renderDrafts();
+    showToast("Taslak kaydedildi.");
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    draftBtn.disabled = false;
+    draftBtn.textContent = originalLabel;
+  }
+}
+
+function startEditDraft(slug) {
+  const d = state.drafts.find((x) => x.slug === slug);
+  if (!d) return;
+
+  uiState.mode = "new-post";
+  uiState.targetSlug = null;
+  uiState.targetSha = null;
+  uiState.targetPost = null;
+  uiState.editingEntryIndex = null;
+  uiState.slugTouched = true;
+  uiState.draftSlug = d.slug;
+  uiState.draftSha = d.sha;
+
+  const metaAccordion = document.getElementById("meta-accordion");
+  if (metaAccordion) metaAccordion.open = true;
+
+  document.getElementById("f-title").value = d.title || "";
+  document.getElementById("f-title").disabled = false;
+  document.getElementById("f-slug").value = d.slug;
+  document.getElementById("f-slug").disabled = false;
+  refreshCategorySelect();
+  document.getElementById("f-category").value = d.category || "genel";
+  document.getElementById("f-category").disabled = false;
+  document.getElementById("f-subcategory").value = d.subcategory || "";
+  document.getElementById("f-subcategory").disabled = false;
+  document.getElementById("f-stage").value = d.stage || "🫘 Çekirdek";
+  document.getElementById("f-stage").disabled = false;
+  document.getElementById("f-image-caption").value = d.imageCaption || "";
+  document.getElementById("f-datetime-row").style.display = "";
+  document.getElementById("f-body-row").style.display = "";
+  document.getElementById("f-datetime").value = toLocalDatetimeValue(d.date ? new Date(d.date) : new Date());
+  document.getElementById("f-body").value = d.body || "";
+  document.getElementById("cropper-wrap").style.display = "none";
+  document.getElementById("f-photo-file").value = "";
+  state.croppedBlob = null;
+
+  const preview = document.getElementById("photo-preview");
+  const previewLabel = document.getElementById("photo-preview-label");
+  if (d.image) {
+    preview.src = `../${d.image}`;
+    preview.style.display = "";
+    previewLabel.textContent = "Mevcut görsel:";
+    previewLabel.style.display = "";
+  } else {
+    preview.removeAttribute("src");
+    preview.style.display = "none";
+    previewLabel.style.display = "none";
+  }
+  updatePhotoBlockVisibility();
+
+  document.getElementById("form-title").textContent = `Taslak: ${d.title}`;
+  document.getElementById("submit-btn").textContent = "Yayınla";
+  document.getElementById("cancel-edit-btn").style.display = "";
+  document.getElementById("draft-save-btn").style.display = "";
+  document.getElementById("form-error").textContent = "";
+  document.getElementById("post-form").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function handleDeleteDraft(slug, sha) {
+  if (!confirm(`"${slug}" taslağını kalıcı olarak silmek istediğine emin misin?`)) return;
+  try {
+    await ghDeleteFile(`${DRAFTS_FOLDER}/${slug}.json`, sha, `Taslak sil: ${slug}`);
+    if (uiState.draftSlug === slug) {
+      uiState.draftSlug = null;
+      uiState.draftSha = null;
+    }
+    await loadDrafts();
+    renderDrafts();
+    showToast("Taslak silindi.");
+  } catch (e) {
+    showToast(`Silinemedi: ${e.message}`, true);
+  }
+}
+
 function renderArchive() {
   document.getElementById("archive-root").innerHTML = archiveHTML();
 }
@@ -690,6 +879,8 @@ function resetForm() {
   uiState.targetPost = null;
   uiState.slugTouched = false;
   uiState.editingEntryIndex = null;
+  uiState.draftSlug = null;
+  uiState.draftSha = null;
   state.croppedBlob = null;
 
   const form = document.getElementById("post-form");
@@ -709,6 +900,7 @@ function resetForm() {
   document.getElementById("form-title").textContent = "Yeni Yazı";
   document.getElementById("submit-btn").textContent = "Yayınla";
   document.getElementById("cancel-edit-btn").style.display = "none";
+  document.getElementById("draft-save-btn").style.display = "";
   document.getElementById("form-error").textContent = "";
   updatePhotoBlockVisibility();
 }
@@ -767,6 +959,7 @@ function startAddEntry(slug) {
   document.getElementById("form-title").textContent = `Yeni Girdi: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Girdi Ekle";
   document.getElementById("cancel-edit-btn").style.display = "";
+  document.getElementById("draft-save-btn").style.display = "none";
   document.getElementById("post-form").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -786,6 +979,7 @@ function startEditEntry(slug, index) {
   document.getElementById("form-title").textContent = `Girdiyi Düzenle: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Girdiyi Güncelle";
   document.getElementById("cancel-edit-btn").style.display = "";
+  document.getElementById("draft-save-btn").style.display = "none";
   document.getElementById("post-form").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -802,6 +996,7 @@ function startEditMeta(slug) {
   document.getElementById("form-title").textContent = `Bilgileri Düzenle: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Bilgileri Güncelle";
   document.getElementById("cancel-edit-btn").style.display = "";
+  document.getElementById("draft-save-btn").style.display = "none";
   document.getElementById("post-form").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -957,6 +1152,14 @@ async function onPostSubmit(e) {
     }[uiState.mode];
     await ghPutFile(path, content, message, sha);
 
+    if (uiState.mode === "new-post" && uiState.draftSlug) {
+      try {
+        await ghDeleteFile(`${DRAFTS_FOLDER}/${uiState.draftSlug}.json`, uiState.draftSha, `Taslak silindi (yayınlandı): ${uiState.draftSlug}`);
+      } catch (e) {
+        /* taslak temizliği başarısız olsa da yayın işlemi tamamlandı */
+      }
+    }
+
     const successMessage = {
       "new-post": "Yazı yayınlandı.",
       "add-entry": "Girdi eklendi.",
@@ -967,6 +1170,8 @@ async function onPostSubmit(e) {
     resetForm();
     await loadPosts();
     renderArchive();
+    await loadDrafts();
+    renderDrafts();
     showToast(successMessage);
   } catch (err) {
     errorEl.textContent = err.message;
@@ -1037,6 +1242,8 @@ function wireDashboard() {
   document.getElementById("cancel-edit-btn").addEventListener("click", resetForm);
   document.getElementById("post-form").addEventListener("submit", onPostSubmit);
   document.getElementById("archive-root").addEventListener("click", onArchiveClick);
+  document.getElementById("draft-save-btn").addEventListener("click", handleSaveDraft);
+  document.getElementById("drafts-root").addEventListener("click", onDraftsClick);
 
   document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date());
 }
@@ -1067,6 +1274,8 @@ async function renderRoot() {
 
   await loadPosts();
   renderArchive();
+  await loadDrafts();
+  renderDrafts();
 }
 
 function initAdmin() {
