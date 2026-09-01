@@ -73,6 +73,8 @@
 .admin-dashboard input[type="datetime-local"] {
   padding-left: 8px;
   padding-right: 8px;
+  font-size: 13px;
+  text-transform: lowercase;
 }
 
 #f-datetime-row {
