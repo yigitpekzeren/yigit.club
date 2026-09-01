@@ -660,9 +660,9 @@ function archiveExpandedHTML(p) {
   return `
     <div class="archive-expanded">
       <div class="archive-actions">
-        <button type="button" data-action="add-entry" data-slug="${escapeHtml(p.slug)}">+ Yeni Girdi Ekle</button>
-        <button type="button" data-action="edit-meta" data-slug="${escapeHtml(p.slug)}" class="btn-secondary">Bilgileri Düzenle</button>
-        <button type="button" data-action="delete-post" data-slug="${escapeHtml(p.slug)}" data-sha="${escapeHtml(p.sha)}" class="btn-danger">Yazıyı Sil</button>
+        <button type="button" class="btn-secondary" data-action="add-entry" data-slug="${escapeHtml(p.slug)}">Ekle</button>
+        <button type="button" data-action="edit-meta" data-slug="${escapeHtml(p.slug)}" class="btn-secondary">Künyeyi Güncelle</button>
+        <button type="button" data-action="delete-post" data-slug="${escapeHtml(p.slug)}" data-sha="${escapeHtml(p.sha)}" class="btn-danger">Tümünü Sil</button>
       </div>
       <div class="archive-entries">
         ${entries

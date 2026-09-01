@@ -277,7 +277,7 @@
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: 0.01em;
-  font-size: 19px;
+  font-size: 16px;
 }
 
 .draft-item {
@@ -326,6 +326,8 @@
 .draft-item-actions .btn-danger {
   padding: 4px 8px;
   font-size: 12px;
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .admin-columns-3 {
@@ -498,14 +500,16 @@
 
 .archive-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
   margin: 10px 0;
 }
 
 .archive-actions button {
-  padding: 6px 10px;
-  font-size: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  border-radius: 8px;
 }
 
 .archive-entries {
@@ -543,6 +547,8 @@
 .archive-entry-actions .btn-danger {
   padding: 4px 8px;
   font-size: 12px;
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .admin-form-actions {
