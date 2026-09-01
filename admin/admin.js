@@ -532,12 +532,14 @@ function dashboardHTML() {
               </select>
 
               <div id="f-datetime-row">
-                <label for="f-datetime-display">Tarih ve Saat</label>
-                <button type="button" id="f-datetime-display" class="datetime-display">
-                  <span id="f-datetime-label"></span>
-                  <span class="datetime-icon" aria-hidden="true">📅</span>
-                </button>
-                <input type="datetime-local" id="f-datetime" class="datetime-hidden-input" tabindex="-1" aria-hidden="true">
+                <label for="f-datetime">Tarih ve Saat</label>
+                <div class="datetime-wrap">
+                  <div class="datetime-display" aria-hidden="true">
+                    <span id="f-datetime-label"></span>
+                    <span class="datetime-icon" aria-hidden="true">📅</span>
+                  </div>
+                  <input type="datetime-local" id="f-datetime" class="datetime-overlay-input">
+                </div>
               </div>
             </div>
           </form>
@@ -1281,16 +1283,16 @@ function wireDashboard() {
   document.getElementById("draft-save-btn").addEventListener("click", handleSaveDraft);
   document.getElementById("drafts-root").addEventListener("click", onDraftsClick);
   document.getElementById("focus-mode-btn").addEventListener("click", toggleFocusMode);
-
-  document.getElementById("f-datetime-display").addEventListener("click", () => {
-    const input = document.getElementById("f-datetime");
-    if (input.showPicker) {
-      input.showPicker();
-    } else {
-      input.focus();
+  document.getElementById("f-datetime").addEventListener("input", updateDatetimeDisplay);
+  document.getElementById("f-datetime").addEventListener("click", (e) => {
+    if (e.target.showPicker) {
+      try {
+        e.target.showPicker();
+      } catch (err) {
+        /* bazı tarayıcılar reddedebilir; bu durumda tarayıcının varsayılan davranışı geçerli olur */
+      }
     }
   });
-  document.getElementById("f-datetime").addEventListener("input", updateDatetimeDisplay);
   setDatetimeValue(new Date());
 }
 
