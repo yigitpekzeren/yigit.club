@@ -295,6 +295,45 @@ async function handleAddCategory() {
   }
 }
 
+async function handleDeleteCategory() {
+  const slug = document.getElementById("f-category").value;
+  if (slug === "genel") {
+    showToast("Genel kategorisi silinemez.", true);
+    return;
+  }
+  const cat = state.categories.find((c) => c.slug === slug);
+  if (!cat) return;
+
+  const postsUsing = state.posts.filter((p) => p.category === slug).length;
+  const warning = postsUsing > 0
+    ? `"${cat.label}" kategorisini silmek istediğine emin misin? Bu kategoriyi kullanan ${postsUsing} yazı var; yazılar etkilenmeye devam edecek ama kategori sayfası kaldırılacak.`
+    : `"${cat.label}" kategorisini kalıcı olarak silmek istediğine emin misin?`;
+  if (!confirm(warning)) return;
+
+  const btn = document.getElementById("delete-category-btn");
+  btn.disabled = true;
+  try {
+    const newList = state.categories.filter((c) => c.slug !== slug);
+    await saveCategories(newList);
+    state.categories = newList;
+
+    const pagePath = `kategori/${slug}.html`;
+    const existing = await ghGetFile(pagePath);
+    if (existing) {
+      await ghDeleteFile(pagePath, existing.sha, `Kategori sayfası sil: ${slug}`);
+    }
+
+    refreshCategorySelect();
+    document.getElementById("f-category").value = "genel";
+    updatePhotoBlockVisibility();
+    showToast(`"${cat.label}" kategorisi silindi.`);
+  } catch (e) {
+    showToast(`Kategori silinemedi: ${e.message}`, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 /* ---------- markdown toolbar ---------- */
 
 function applyMdFormat(textarea, type) {
@@ -549,6 +588,7 @@ function dashboardHTML() {
               <div class="category-row">
                 <select id="f-category">${categoryOptionsHtml("genel")}</select>
                 <button type="button" id="add-category-btn" class="btn-secondary" title="Yeni kategori ekle">+</button>
+                <button type="button" id="delete-category-btn" class="btn-danger" title="Seçili kategoriyi sil">−</button>
               </div>
               <div id="new-category-form" class="new-category-form" style="display:none;">
                 <input type="text" id="new-category-label" placeholder="Kategori adı (örn: Seyahat)">
@@ -1300,6 +1340,7 @@ function wireDashboard() {
     el.style.display = el.style.display === "none" ? "" : "none";
   });
   document.getElementById("confirm-add-category").addEventListener("click", handleAddCategory);
+  document.getElementById("delete-category-btn").addEventListener("click", handleDeleteCategory);
 
   document.querySelectorAll(".md-toolbar:not(#ozet-toolbar) button").forEach((btn) => {
     btn.addEventListener("mousedown", (e) => e.preventDefault());

@@ -434,7 +434,8 @@
   flex: 1;
 }
 
-.category-row .btn-secondary {
+.category-row .btn-secondary,
+.category-row .btn-danger {
   padding: 0 14px;
   flex-shrink: 0;
 }
