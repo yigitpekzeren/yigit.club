@@ -192,6 +192,7 @@ function kategoriPageTemplate(slug, label) {
   <head>
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <script>
       try {
         if (localStorage.getItem("yigitclub_theme") === "light") {
