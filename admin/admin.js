@@ -504,23 +504,6 @@ function dashboardHTML() {
         <button id="logout-btn" class="btn-secondary">Çıkış Yap</button>
       </div>
 
-      <details class="admin-ozet-section">
-        <summary><h2>Ana Sayfa Özeti</h2></summary>
-        <p class="hint" style="margin-bottom:8px;">Ana sayfanın üstünde büyük yazıyla gösterilir. Markdown destekler (**kalın** gibi).</p>
-        <div class="md-toolbar" id="ozet-toolbar">
-          <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
-          <button type="button" data-md="italic" title="İtalik"><em>i</em></button>
-          <button type="button" data-md="h2" title="Başlık">H2</button>
-          <button type="button" data-md="link" title="Bağlantı">🔗</button>
-          <button type="button" data-md="list" title="Liste">•</button>
-        </div>
-        <textarea id="f-ozet" rows="3"></textarea>
-        <div class="admin-form-actions">
-          <button type="button" id="ozet-save-btn">Özeti Kaydet</button>
-          <span id="ozet-status" class="admin-post-meta"></span>
-        </div>
-      </details>
-
       <div class="admin-columns-3">
         <section class="admin-col-meta">
           <details class="admin-meta-accordion" id="meta-accordion" open>
@@ -601,6 +584,23 @@ function dashboardHTML() {
         <section class="admin-col-archive">
           <h2>Arşiv</h2>
           <div id="archive-root"><p style="color:#a1a1aa;">Yükleniyor...</p></div>
+
+          <details class="admin-ozet-section">
+            <summary><h2>Ana Sayfa Özeti</h2></summary>
+            <p class="hint" style="margin-bottom:8px;">Ana sayfanın üstünde büyük yazıyla gösterilir. Markdown destekler (**kalın** gibi).</p>
+            <div class="md-toolbar" id="ozet-toolbar">
+              <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
+              <button type="button" data-md="italic" title="İtalik"><em>i</em></button>
+              <button type="button" data-md="h2" title="Başlık">H2</button>
+              <button type="button" data-md="link" title="Bağlantı">🔗</button>
+              <button type="button" data-md="list" title="Liste">•</button>
+            </div>
+            <textarea id="f-ozet" rows="3"></textarea>
+            <div class="admin-form-actions">
+              <button type="button" id="ozet-save-btn">Özeti Kaydet</button>
+              <span id="ozet-status" class="admin-post-meta"></span>
+            </div>
+          </details>
         </section>
       </div>
     </div>
