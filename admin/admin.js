@@ -181,7 +181,7 @@ function kategoriPageTemplate(slug, label) {
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeLabel} | yigit.club</title>
-    <link rel="stylesheet" href="../css/style.css?v=2">
+    <link rel="stylesheet" href="../css/style.css?v=3">
   </head>
   <body>
 

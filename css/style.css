@@ -248,8 +248,10 @@ nav a:hover {
 
 .kart-ust {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 12px;
@@ -379,6 +381,20 @@ nav a:hover {
 @media (max-width: 720px) {
   .post-foto-layout {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .buyuk {
+    grid-column: span 1;
+  }
+
+  .kart-foto.buyuk {
+    aspect-ratio: 4 / 3;
   }
 }
 
