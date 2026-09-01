@@ -1,0 +1,91 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #09090b;
+  color: #f4f4f5;
+  font-family: system-ui, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0;
+  border-bottom: 1px solid #27272a;
+  margin-bottom: 40px;
+}
+
+header a {
+  color: inherit;
+  text-decoration: none;
+}
+
+header .logo {
+  font-weight: 600;
+}
+
+nav {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: #a1a1aa;
+}
+
+nav a:hover {
+  color: #f4f4f5;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.kart {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 16px;
+  padding: 24px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #f4f4f5;
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.kart:hover {
+  transform: translateY(-4px);
+  border-color: #52525b;
+}
+
+.buyuk {
+  grid-column: span 2;
+}
+
+.kart-ust {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #a1a1aa;
+  margin-bottom: 12px;
+}
+
+.rozet {
+  background-color: #27272a;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.kart-baslik {
+  font-size: 17px;
+  font-weight: 500;
+}
