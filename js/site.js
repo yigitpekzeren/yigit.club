@@ -39,6 +39,11 @@ function formatDateTime(iso) {
   return `${datePart} · ${timePart}`;
 }
 
+function formatDateOnly(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("tr-TR", { year: "numeric", month: "long", day: "numeric" });
+}
+
 async function renderNav(fetchPrefix, navPrefix) {
   const nav = document.getElementById("site-nav");
   if (!nav) return;
@@ -90,6 +95,7 @@ function kartHTML(post, pathPrefix, buyuk, categories) {
         <div>
           <div class="kart-baslik">${escapeHtml(post.title)}</div>
           ${post.imageCaption ? `<div class="kart-foto-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
+          <div class="kart-tarih">${formatDateOnly(post.date)}</div>
         </div>
       </a>
     `;
@@ -101,7 +107,10 @@ function kartHTML(post, pathPrefix, buyuk, categories) {
         <span class="kart-kategori">${escapeHtml(etiketText)}</span>
         ${rozet ? `<span class="rozet">${escapeHtml(rozet)}</span>` : ""}
       </div>
-      <div class="kart-baslik">${escapeHtml(post.title)}</div>
+      <div>
+        <div class="kart-baslik">${escapeHtml(post.title)}</div>
+        <div class="kart-tarih">${formatDateOnly(post.date)}</div>
+      </div>
     </a>
   `;
 }
@@ -168,7 +177,7 @@ async function renderPost(containerSelector) {
         <span class="kart-kategori">${escapeHtml(kategoriEtiket)}${post.subcategory ? " / " + escapeHtml(post.subcategory) : ""}</span>
         ${post.stage ? `<span class="rozet">${escapeHtml(post.stage)}</span>` : ""}
       </div>
-      <h1 style="margin-bottom: 24px;">${escapeHtml(post.title)}</h1>
+      <h1 class="post-baslik" style="margin-bottom: 24px;">${escapeHtml(post.title)}</h1>
     `;
 
     if (post.category === "fotograf" && post.image) {
