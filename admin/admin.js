@@ -191,6 +191,7 @@ function kategoriPageTemplate(slug, label) {
 <html lang="tr">
   <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <script>
       try {
         if (localStorage.getItem("yigitclub_theme") === "light") {
