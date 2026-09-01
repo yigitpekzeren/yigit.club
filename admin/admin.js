@@ -500,7 +500,7 @@ function dashboardHTML() {
   return `
     <div class="admin-dashboard">
       <div class="admin-topbar">
-        <h1>Yönetim Paneli</h1>
+        <h1 class="logo"><span class="logo-bold">admin.</span><span class="logo-italic">club</span><span class="logo-cursor"></span></h1>
         <button id="logout-btn" class="btn-secondary">Çıkış Yap</button>
       </div>
 

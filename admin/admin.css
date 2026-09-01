@@ -169,13 +169,17 @@
   margin-bottom: 12px;
 }
 
-.admin-topbar h1,
+.admin-topbar h1.logo {
+  font-size: 22px;
+}
+
 .admin-ozet-section summary h2,
 .admin-meta-accordion summary h2,
 .admin-col-archive h2 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: 0.01em;
+  font-size: 19px;
 }
 
 .admin-columns-3 {
