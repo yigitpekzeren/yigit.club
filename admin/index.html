@@ -1,11 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yönetim Paneli | yigit.club</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="admin.css">
   </head>
   <body>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+    <header>
+      <a href="../index.html" class="logo">yigit.club</a>
+      <nav>
+        <a href="../kategori/miras.html">Miras</a>
+        <a href="../kategori/hobiler.html">Hobiler</a>
+        <a href="../kategori/atolye.html">Atölye</a>
+      </nav>
+    </header>
+
+    <div id="admin-root">
+      <p style="color:#a1a1aa;">Yükleniyor...</p>
+    </div>
+
+    <script src="admin.js"></script>
+    <script>
+      initAdmin();
+    </script>
+
   </body>
 </html>

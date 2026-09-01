@@ -1,0 +1,130 @@
+.admin-gate {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.admin-form label {
+  display: block;
+  margin: 16px 0 6px;
+  font-size: 13px;
+  color: #a1a1aa;
+}
+
+.admin-form input[type="text"],
+.admin-form input[type="password"],
+.admin-form input[type="date"],
+.admin-form select,
+.admin-form textarea {
+  width: 100%;
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #f4f4f5;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.admin-form textarea {
+  resize: vertical;
+}
+
+.admin-form input[type="file"] {
+  color: #a1a1aa;
+  font-size: 13px;
+}
+
+.admin-form button[type="submit"],
+.btn-secondary,
+.btn-danger,
+.admin-post-actions button {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  font-family: inherit;
+}
+
+.admin-form button[type="submit"] {
+  background-color: #f4f4f5;
+  color: #09090b;
+}
+
+.admin-form button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border-color: #27272a;
+  color: #f4f4f5;
+}
+
+.admin-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.admin-columns {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.admin-form-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.admin-post-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.admin-post-title {
+  font-weight: 500;
+}
+
+.admin-post-meta {
+  font-size: 12px;
+  color: #a1a1aa;
+  margin-top: 4px;
+}
+
+.admin-post-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.admin-post-actions button {
+  background: transparent;
+  border-color: #27272a;
+  color: #f4f4f5;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.admin-post-actions .btn-danger {
+  border-color: #7f1d1d;
+  color: #f87171;
+}
+
+@media (max-width: 720px) {
+  .admin-columns {
+    grid-template-columns: 1fr;
+  }
+}
