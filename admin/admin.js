@@ -507,38 +507,44 @@ function dashboardHTML() {
             <label for="f-title">Başlık</label>
             <input type="text" id="f-title" required>
 
-            <label for="f-slug">Slug <span class="hint">dosya/URL adı</span></label>
-            <input type="text" id="f-slug" class="slug-input" required>
+            <div class="focus-hide">
+              <label for="f-slug">Slug <span class="hint">dosya/URL adı</span></label>
+              <input type="text" id="f-slug" class="slug-input" required>
 
-            <label for="f-category">Ana Kategori</label>
-            <div class="category-row">
-              <select id="f-category">${categoryOptionsHtml("genel")}</select>
-              <button type="button" id="add-category-btn" class="btn-secondary" title="Yeni kategori ekle">+</button>
-            </div>
-            <div id="new-category-form" class="new-category-form" style="display:none;">
-              <input type="text" id="new-category-label" placeholder="Kategori adı (örn: Seyahat)">
-              <button type="button" id="confirm-add-category" class="btn-secondary">Ekle</button>
-            </div>
+              <label for="f-category">Ana Kategori</label>
+              <div class="category-row">
+                <select id="f-category">${categoryOptionsHtml("genel")}</select>
+                <button type="button" id="add-category-btn" class="btn-secondary" title="Yeni kategori ekle">+</button>
+              </div>
+              <div id="new-category-form" class="new-category-form" style="display:none;">
+                <input type="text" id="new-category-label" placeholder="Kategori adı (örn: Seyahat)">
+                <button type="button" id="confirm-add-category" class="btn-secondary">Ekle</button>
+              </div>
 
-            <label for="f-subcategory">Alt Kategori (opsiyonel)</label>
-            <input type="text" id="f-subcategory">
+              <label for="f-subcategory">Alt Kategori (opsiyonel)</label>
+              <input type="text" id="f-subcategory">
 
-            <label for="f-stage">Kahve Aşaması</label>
-            <select id="f-stage">
-              <option value="🫘 Çekirdek">🫘 Çekirdek</option>
-              <option value="⏳ Demleniyor">⏳ Demleniyor</option>
-              <option value="☕ Fincanda">☕ Fincanda</option>
-            </select>
+              <label for="f-stage">Kahve Aşaması</label>
+              <select id="f-stage">
+                <option value="🫘 Çekirdek">🫘 Çekirdek</option>
+                <option value="⏳ Demleniyor">⏳ Demleniyor</option>
+                <option value="☕ Fincanda">☕ Fincanda</option>
+              </select>
 
-            <div id="f-datetime-row">
-              <label for="f-datetime">Tarih ve Saat</label>
-              <input type="datetime-local" id="f-datetime">
+              <div id="f-datetime-row">
+                <label for="f-datetime-display">Tarih ve Saat</label>
+                <button type="button" id="f-datetime-display" class="datetime-display">
+                  <span id="f-datetime-label"></span>
+                  <span class="datetime-icon" aria-hidden="true">📅</span>
+                </button>
+                <input type="datetime-local" id="f-datetime" class="datetime-hidden-input" tabindex="-1" aria-hidden="true">
+              </div>
             </div>
           </form>
         </section>
 
         <section class="admin-col-content">
-          <div id="photo-block" class="photo-block" style="display:none;">
+          <div id="photo-block" class="photo-block focus-hide" style="display:none;">
             <label>Fotoğraf</label>
             <input type="file" id="f-photo-file" accept="image/*">
             <div id="cropper-wrap" class="cropper-wrap" style="display:none;">
@@ -607,6 +613,7 @@ function dashboardHTML() {
           <button type="button" id="draft-save-btn" class="btn-secondary">Taslak Kaydet</button>
           <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
         </div>
+        <button type="button" id="focus-mode-btn" class="btn-secondary" title="Odak Modu" aria-label="Odak Modu">🧘</button>
         <button id="logout-btn">Çıkış Yap</button>
       </div>
     </div>
@@ -818,7 +825,7 @@ function startEditDraft(slug) {
   document.getElementById("f-image-caption").value = d.imageCaption || "";
   document.getElementById("f-datetime-row").style.display = "";
   document.getElementById("f-body-row").style.display = "";
-  document.getElementById("f-datetime").value = toLocalDatetimeValue(d.date ? new Date(d.date) : new Date());
+  setDatetimeValue(d.date ? new Date(d.date) : new Date());
   document.getElementById("f-body").value = d.body || "";
   document.getElementById("cropper-wrap").style.display = "none";
   document.getElementById("f-photo-file").value = "";
@@ -866,6 +873,13 @@ function renderArchive() {
   document.getElementById("archive-root").innerHTML = archiveHTML();
 }
 
+function toggleFocusMode() {
+  const dashboard = document.querySelector(".admin-dashboard");
+  const btn = document.getElementById("focus-mode-btn");
+  const isActive = dashboard.classList.toggle("focus-mode");
+  btn.classList.toggle("active", isActive);
+}
+
 /* ---------- form modları ---------- */
 
 function resetForm() {
@@ -887,7 +901,7 @@ function resetForm() {
   });
   document.getElementById("f-datetime-row").style.display = "";
   document.getElementById("f-body-row").style.display = "";
-  document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date());
+  setDatetimeValue(new Date());
   document.getElementById("f-image-caption").value = "";
   document.getElementById("photo-preview").style.display = "none";
   document.getElementById("photo-preview-label").style.display = "none";
@@ -906,6 +920,27 @@ function toLocalDatetimeValue(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function updateDatetimeDisplay() {
+  const input = document.getElementById("f-datetime");
+  const label = document.getElementById("f-datetime-label");
+  if (!input.value) {
+    label.textContent = "";
+    return;
+  }
+  label.textContent = new Date(input.value).toLocaleString("tr-TR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function setDatetimeValue(date) {
+  document.getElementById("f-datetime").value = toLocalDatetimeValue(date);
+  updateDatetimeDisplay();
+}
+
 function fillMetaFields(p) {
   const editable = uiState.mode === "edit-meta";
   document.getElementById("f-title").value = p.title || "";
@@ -922,7 +957,7 @@ function fillMetaFields(p) {
   document.getElementById("f-image-caption").value = p.imageCaption || "";
   document.getElementById("f-datetime-row").style.display = editable ? "none" : "";
   document.getElementById("f-body-row").style.display = editable ? "none" : "";
-  document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date());
+  setDatetimeValue(new Date());
   document.getElementById("cropper-wrap").style.display = "none";
   document.getElementById("f-photo-file").value = "";
   state.croppedBlob = null;
@@ -971,7 +1006,7 @@ function startEditEntry(slug, index) {
   uiState.editingEntryIndex = index;
   fillMetaFields(p);
   document.getElementById("f-body").value = entry.body || "";
-  document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date(entry.date));
+  setDatetimeValue(new Date(entry.date));
   document.getElementById("form-title").textContent = `Girdiyi Düzenle: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Girdiyi Güncelle";
   document.getElementById("cancel-edit-btn").style.display = "";
@@ -1245,8 +1280,18 @@ function wireDashboard() {
   document.getElementById("archive-root").addEventListener("click", onArchiveClick);
   document.getElementById("draft-save-btn").addEventListener("click", handleSaveDraft);
   document.getElementById("drafts-root").addEventListener("click", onDraftsClick);
+  document.getElementById("focus-mode-btn").addEventListener("click", toggleFocusMode);
 
-  document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date());
+  document.getElementById("f-datetime-display").addEventListener("click", () => {
+    const input = document.getElementById("f-datetime");
+    if (input.showPicker) {
+      input.showPicker();
+    } else {
+      input.focus();
+    }
+  });
+  document.getElementById("f-datetime").addEventListener("input", updateDatetimeDisplay);
+  setDatetimeValue(new Date());
 }
 
 async function renderRoot() {

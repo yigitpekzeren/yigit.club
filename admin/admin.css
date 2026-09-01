@@ -70,11 +70,43 @@
   text-transform: lowercase;
 }
 
-.admin-dashboard input[type="datetime-local"] {
-  padding-left: 8px;
-  padding-right: 8px;
+/* iOS/Android native datetime-local metni cihazın kendi dil/bölge ayarına göre
+   değişip taşabiliyor (ör. "2 sep 2026 at 00:58"); gerçek input'u görünmez tutup
+   kendi biçimlendirdiğimiz, her zaman aynı formatta bir buton gösteriyoruz. */
+.datetime-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.datetime-display {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: inherit;
   font-size: 13px;
   text-transform: lowercase;
+  text-align: left;
+  cursor: pointer;
+}
+
+.datetime-display:hover {
+  border-color: var(--border-strong);
+}
+
+.datetime-icon {
+  flex-shrink: 0;
+  font-size: 14px;
 }
 
 #f-datetime-row {
@@ -103,11 +135,12 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
 }
 
-/* yayınla / taslak / iptal / özeti kaydet / çıkış yap: tek bir buton ailesi - aynı font, şekil, boyut */
+/* yayınla / taslak / iptal / özeti kaydet / odak modu / çıkış yap: tek bir buton ailesi - aynı font, şekil, boyut */
 #submit-btn,
 #draft-save-btn,
 #cancel-edit-btn,
 #ozet-save-btn,
+#focus-mode-btn,
 #logout-btn {
   cursor: pointer;
   border-radius: 10px;
@@ -129,6 +162,7 @@
 #draft-save-btn:hover:not(:disabled),
 #cancel-edit-btn:hover:not(:disabled),
 #ozet-save-btn:hover:not(:disabled),
+#focus-mode-btn:hover:not(:disabled),
 #logout-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
@@ -138,6 +172,7 @@
 #draft-save-btn:active:not(:disabled),
 #cancel-edit-btn:active:not(:disabled),
 #ozet-save-btn:active:not(:disabled),
+#focus-mode-btn:active:not(:disabled),
 #logout-btn:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
@@ -147,6 +182,7 @@
 #draft-save-btn:disabled,
 #cancel-edit-btn:disabled,
 #ozet-save-btn:disabled,
+#focus-mode-btn:disabled,
 #logout-btn:disabled {
   opacity: 0.6;
   cursor: default;
@@ -161,6 +197,12 @@
 #logout-btn {
   border-color: var(--danger-border);
   color: var(--danger-text);
+}
+
+#focus-mode-btn.active {
+  background-color: var(--text);
+  color: var(--bg);
+  border-color: transparent;
 }
 
 .btn-secondary {
@@ -211,26 +253,27 @@
   flex-wrap: wrap;
 }
 
-#logout-btn {
+#focus-mode-btn {
   margin-left: auto;
 }
 
 @media (max-width: 520px) {
   .admin-actionbar-inner {
-    padding-left: 14px;
-    padding-right: 14px;
-    gap: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+    gap: 6px;
   }
 
   .admin-actionbar-left {
-    gap: 8px;
+    gap: 6px;
   }
 
   #submit-btn,
   #draft-save-btn,
   #cancel-edit-btn,
+  #focus-mode-btn,
   #logout-btn {
-    padding: 8px 14px;
+    padding: 8px 11px;
     font-size: 13px;
   }
 }
@@ -347,6 +390,21 @@
   grid-template-columns: 260px 1fr 300px;
   gap: 28px;
   align-items: start;
+}
+
+/* odak modu: sadece başlık ve içerik kalsın, geri kalan alanları ve arşiv sütununu gizle */
+.admin-dashboard.focus-mode .admin-col-archive {
+  display: none;
+}
+
+.admin-dashboard.focus-mode .admin-columns-3 {
+  grid-template-columns: 1fr;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.admin-dashboard.focus-mode .focus-hide {
+  display: none !important;
 }
 
 .hint {
