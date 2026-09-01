@@ -104,6 +104,8 @@
   font-weight: 600;
   font-size: 14px;
   line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
   border: 1px solid var(--border);
   background-color: transparent;
   color: var(--text);
@@ -169,10 +171,56 @@
   border-color: var(--danger-text);
 }
 
-.admin-bottombar {
+.admin-actionbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+}
+
+.admin-actionbar-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
   display: flex;
-  justify-content: flex-end;
-  margin-top: 32px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.admin-actionbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#logout-btn {
+  margin-left: auto;
+}
+
+@media (max-width: 520px) {
+  .admin-actionbar-inner {
+    padding-left: 14px;
+    padding-right: 14px;
+    gap: 8px;
+  }
+
+  .admin-actionbar-left {
+    gap: 8px;
+  }
+
+  #submit-btn,
+  #draft-save-btn,
+  #cancel-edit-btn,
+  #logout-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
 }
 
 .admin-ozet-section,
@@ -184,20 +232,17 @@
 }
 
 .admin-ozet-section summary,
-.admin-meta-accordion summary,
 .admin-drafts-section summary {
   cursor: pointer;
   list-style: none;
 }
 
 .admin-ozet-section summary::-webkit-details-marker,
-.admin-meta-accordion summary::-webkit-details-marker,
 .admin-drafts-section summary::-webkit-details-marker {
   display: none;
 }
 
 .admin-ozet-section summary h2,
-.admin-meta-accordion summary h2,
 .admin-drafts-section summary h2 {
   display: inline-flex;
   align-items: center;
@@ -205,7 +250,6 @@
 }
 
 .admin-ozet-section summary h2::before,
-.admin-meta-accordion summary h2::before,
 .admin-drafts-section summary h2::before {
   content: "▸";
   font-size: 13px;
@@ -214,7 +258,6 @@
 }
 
 .admin-ozet-section[open] summary h2::before,
-.admin-meta-accordion[open] summary h2::before,
 .admin-drafts-section[open] summary h2::before {
   transform: rotate(90deg);
 }
@@ -223,18 +266,14 @@
   margin-top: 12px;
 }
 
-.admin-meta-accordion summary {
-  margin-bottom: 12px;
-}
-
 .admin-drafts-section[open] summary {
   margin-bottom: 12px;
 }
 
 .admin-ozet-section summary h2,
-.admin-meta-accordion summary h2,
 .admin-drafts-section summary h2,
-.admin-col-archive h2 {
+.admin-col-archive h2,
+.admin-col-meta h2 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: 0.01em;

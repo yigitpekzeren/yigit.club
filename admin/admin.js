@@ -502,41 +502,39 @@ function dashboardHTML() {
     <div class="admin-dashboard">
       <div class="admin-columns-3">
         <section class="admin-col-meta">
-          <details class="admin-meta-accordion" id="meta-accordion" open>
-            <summary><h2 id="form-title">Yeni Yazı</h2></summary>
-            <form id="post-form" class="admin-form">
-              <label for="f-title">Başlık</label>
-              <input type="text" id="f-title" required>
+          <h2 id="form-title">Yeni Yazı</h2>
+          <form id="post-form" class="admin-form">
+            <label for="f-title">Başlık</label>
+            <input type="text" id="f-title" required>
 
-              <label for="f-slug">Slug <span class="hint">dosya/URL adı</span></label>
-              <input type="text" id="f-slug" class="slug-input" required>
+            <label for="f-slug">Slug <span class="hint">dosya/URL adı</span></label>
+            <input type="text" id="f-slug" class="slug-input" required>
 
-              <label for="f-category">Ana Kategori</label>
-              <div class="category-row">
-                <select id="f-category">${categoryOptionsHtml("genel")}</select>
-                <button type="button" id="add-category-btn" class="btn-secondary" title="Yeni kategori ekle">+</button>
-              </div>
-              <div id="new-category-form" class="new-category-form" style="display:none;">
-                <input type="text" id="new-category-label" placeholder="Kategori adı (örn: Seyahat)">
-                <button type="button" id="confirm-add-category" class="btn-secondary">Ekle</button>
-              </div>
+            <label for="f-category">Ana Kategori</label>
+            <div class="category-row">
+              <select id="f-category">${categoryOptionsHtml("genel")}</select>
+              <button type="button" id="add-category-btn" class="btn-secondary" title="Yeni kategori ekle">+</button>
+            </div>
+            <div id="new-category-form" class="new-category-form" style="display:none;">
+              <input type="text" id="new-category-label" placeholder="Kategori adı (örn: Seyahat)">
+              <button type="button" id="confirm-add-category" class="btn-secondary">Ekle</button>
+            </div>
 
-              <label for="f-subcategory">Alt Kategori (opsiyonel)</label>
-              <input type="text" id="f-subcategory">
+            <label for="f-subcategory">Alt Kategori (opsiyonel)</label>
+            <input type="text" id="f-subcategory">
 
-              <label for="f-stage">Kahve Aşaması</label>
-              <select id="f-stage">
-                <option value="🫘 Çekirdek">🫘 Çekirdek</option>
-                <option value="⏳ Demleniyor">⏳ Demleniyor</option>
-                <option value="☕ Fincanda">☕ Fincanda</option>
-              </select>
+            <label for="f-stage">Kahve Aşaması</label>
+            <select id="f-stage">
+              <option value="🫘 Çekirdek">🫘 Çekirdek</option>
+              <option value="⏳ Demleniyor">⏳ Demleniyor</option>
+              <option value="☕ Fincanda">☕ Fincanda</option>
+            </select>
 
-              <div id="f-datetime-row">
-                <label for="f-datetime">Tarih ve Saat</label>
-                <input type="datetime-local" id="f-datetime">
-              </div>
-            </form>
-          </details>
+            <div id="f-datetime-row">
+              <label for="f-datetime">Tarih ve Saat</label>
+              <input type="datetime-local" id="f-datetime">
+            </div>
+          </form>
         </section>
 
         <section class="admin-col-content">
@@ -571,11 +569,6 @@ function dashboardHTML() {
           </div>
 
           <p id="form-error" style="color:#f87171; min-height:18px;"></p>
-          <div class="admin-form-actions">
-            <button type="submit" form="post-form" id="submit-btn">Yayınla</button>
-            <button type="button" id="draft-save-btn" class="btn-secondary">Taslak Olarak Kaydet</button>
-            <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
-          </div>
         </section>
 
         <section class="admin-col-archive">
@@ -605,8 +598,15 @@ function dashboardHTML() {
           </details>
         </section>
       </div>
+    </div>
 
-      <div class="admin-bottombar">
+    <div class="admin-actionbar">
+      <div class="admin-actionbar-inner">
+        <div class="admin-actionbar-left">
+          <button type="submit" form="post-form" id="submit-btn">Yayınla</button>
+          <button type="button" id="draft-save-btn" class="btn-secondary">Taslak Kaydet</button>
+          <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
+        </div>
         <button id="logout-btn">Çıkış Yap</button>
       </div>
     </div>
@@ -804,9 +804,6 @@ function startEditDraft(slug) {
   uiState.draftSlug = d.slug;
   uiState.draftSha = d.sha;
 
-  const metaAccordion = document.getElementById("meta-accordion");
-  if (metaAccordion) metaAccordion.open = true;
-
   document.getElementById("f-title").value = d.title || "";
   document.getElementById("f-title").disabled = false;
   document.getElementById("f-slug").value = d.slug;
@@ -990,8 +987,6 @@ function startEditMeta(slug) {
   uiState.targetSha = p.sha;
   uiState.targetPost = p;
   fillMetaFields(p);
-  const metaAccordion = document.getElementById("meta-accordion");
-  if (metaAccordion) metaAccordion.open = true;
   document.getElementById("form-title").textContent = `Bilgileri Düzenle: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Bilgileri Güncelle";
   document.getElementById("cancel-edit-btn").style.display = "";
@@ -1202,11 +1197,18 @@ async function loadPosts() {
 
 /* ---------- kurulum ---------- */
 
+function syncActionbarSpacing() {
+  const bar = document.querySelector(".admin-actionbar");
+  if (!bar) return;
+  document.body.style.paddingBottom = `${bar.offsetHeight + 24}px`;
+}
+
 function wireDashboard() {
-  const metaAccordion = document.getElementById("meta-accordion");
-  if (metaAccordion && window.matchMedia("(max-width: 1000px)").matches) {
-    metaAccordion.open = false;
+  const actionbar = document.querySelector(".admin-actionbar");
+  if (actionbar && window.ResizeObserver) {
+    new ResizeObserver(syncActionbarSpacing).observe(actionbar);
   }
+  syncActionbarSpacing();
 
   document.getElementById("logout-btn").addEventListener("click", () => {
     localStorage.removeItem(TOKEN_KEY);
