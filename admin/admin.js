@@ -539,12 +539,6 @@ function dashboardHTML() {
                 <label for="f-datetime">Tarih ve Saat</label>
                 <input type="datetime-local" id="f-datetime">
               </div>
-
-              <p id="form-error" style="color:#f87171; min-height:18px;"></p>
-              <div class="admin-form-actions">
-                <button type="submit" id="submit-btn">Yayınla</button>
-                <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
-              </div>
             </form>
           </details>
         </section>
@@ -578,6 +572,12 @@ function dashboardHTML() {
               <button type="button" data-md="list" title="Liste">•</button>
             </div>
             <textarea id="f-body" rows="18" placeholder="Markdown içerik..."></textarea>
+          </div>
+
+          <p id="form-error" style="color:#f87171; min-height:18px;"></p>
+          <div class="admin-form-actions">
+            <button type="submit" form="post-form" id="submit-btn">Yayınla</button>
+            <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
           </div>
         </section>
 
