@@ -3,11 +3,12 @@ const BRANCH = "main";
 const POSTS_FOLDER = "notlar-data";
 const IMAGES_FOLDER = "images";
 const KATEGORILER_DOSYASI = "kategoriler.json";
+const OZET_DOSYASI = "ozet.json";
 const TOKEN_KEY = "yigitclub_admin_token";
 const CROP_W = 320;
 const CROP_H = 240;
 
-const state = { posts: [], categories: [], categoriesSha: null, croppedBlob: null };
+const state = { posts: [], categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null };
 const uiState = { mode: "new-post", targetSlug: null, targetSha: null, targetPost: null, slugTouched: false };
 const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, naturalW: 0, naturalH: 0, dragging: false, lastX: 0, lastY: 0 };
 
@@ -133,12 +134,51 @@ async function saveCategories(list) {
   state.categoriesSha = res.content.sha;
 }
 
+/* ---------- ana sayfa özeti ---------- */
+
+async function loadOzet() {
+  const data = await ghGetFile(OZET_DOSYASI);
+  if (data) {
+    state.ozetSha = data.sha;
+    return JSON.parse(base64ToUtf8(data.content)).text || "";
+  }
+  state.ozetSha = null;
+  return "";
+}
+
+async function handleSaveOzet() {
+  const textarea = document.getElementById("f-ozet");
+  const statusEl = document.getElementById("ozet-status");
+  const btn = document.getElementById("ozet-save-btn");
+  const text = textarea.value.trim();
+
+  btn.disabled = true;
+  statusEl.textContent = "Kaydediliyor...";
+  try {
+    const content = utf8ToBase64(JSON.stringify({ text }, null, 2) + "\n");
+    const res = await ghPutFile(OZET_DOSYASI, content, "Ana sayfa özetini güncelle", state.ozetSha);
+    state.ozetSha = res.content.sha;
+    statusEl.textContent = "Kaydedildi.";
+  } catch (e) {
+    statusEl.textContent = `Kaydedilemedi: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function kategoriPageTemplate(slug, label) {
   const safeLabel = escapeHtml(label);
   return `<!DOCTYPE html>
 <html lang="tr">
   <head>
     <meta charset="UTF-8">
+    <script>
+      try {
+        if (localStorage.getItem("yigitclub_theme") === "light") {
+          document.documentElement.dataset.theme = "light";
+        }
+      } catch (e) {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeLabel} | yigit.club</title>
     <link rel="stylesheet" href="../css/style.css">
@@ -146,8 +186,17 @@ function kategoriPageTemplate(slug, label) {
   <body>
 
     <header>
-      <a href="../index.html" class="logo">yigit.club</a>
-      <nav id="site-nav"></nav>
+      <a href="../index.html" class="logo" id="site-logo" aria-label="yigit.club">
+        <span class="logo-bold"></span><span class="logo-italic"></span><span class="logo-cursor"></span>
+      </a>
+      <div class="header-right">
+        <nav id="site-nav"></nav>
+        <div class="nav-search">
+          <input type="search" id="site-search" placeholder="Ara...">
+          <div id="search-results" class="search-results"></div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Tema değiştir"></button>
+      </div>
     </header>
 
     <h1 style="margin-bottom: 24px;">${safeLabel}</h1>
@@ -156,9 +205,16 @@ function kategoriPageTemplate(slug, label) {
       <p style="color:#a1a1aa;">Yükleniyor...</p>
     </div>
 
-    <script src="../js/site.js"></script>
+    <footer>
+      <p>yigit.club</p>
+    </footer>
+
+    <script src="../js/site.js?v=3"></script>
     <script>
+      initTheme();
+      initLogoTyping();
       renderNav("../", "");
+      initSearch("../");
       renderGrid("#posts-grid", { pathPrefix: "../" });
     </script>
 
@@ -396,6 +452,23 @@ function dashboardHTML() {
         <h1>Yönetim Paneli</h1>
         <button id="logout-btn" class="btn-secondary">Çıkış Yap</button>
       </div>
+
+      <details class="admin-ozet-section">
+        <summary><h2>Ana Sayfa Özeti</h2></summary>
+        <p class="hint" style="margin-bottom:8px;">Ana sayfanın üstünde büyük yazıyla gösterilir. Markdown destekler (**kalın** gibi).</p>
+        <div class="md-toolbar" id="ozet-toolbar">
+          <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
+          <button type="button" data-md="italic" title="İtalik"><em>i</em></button>
+          <button type="button" data-md="h2" title="Başlık">H2</button>
+          <button type="button" data-md="link" title="Bağlantı">🔗</button>
+          <button type="button" data-md="list" title="Liste">•</button>
+        </div>
+        <textarea id="f-ozet" rows="3"></textarea>
+        <div class="admin-form-actions">
+          <button type="button" id="ozet-save-btn">Özeti Kaydet</button>
+          <span id="ozet-status" class="admin-post-meta"></span>
+        </div>
+      </details>
 
       <div class="admin-columns-3">
         <section class="admin-col-meta">
@@ -816,11 +889,16 @@ function wireDashboard() {
   });
   document.getElementById("confirm-add-category").addEventListener("click", handleAddCategory);
 
-  document.querySelectorAll(".md-toolbar button").forEach((btn) => {
+  document.querySelectorAll(".md-toolbar:not(#ozet-toolbar) button").forEach((btn) => {
     btn.addEventListener("click", () => applyMdFormat(document.getElementById("f-body"), btn.dataset.md));
+  });
+  document.querySelectorAll("#ozet-toolbar button").forEach((btn) => {
+    btn.addEventListener("click", () => applyMdFormat(document.getElementById("f-ozet"), btn.dataset.md));
   });
 
   wireCropper();
+
+  document.getElementById("ozet-save-btn").addEventListener("click", handleSaveOzet);
 
   document.getElementById("cancel-edit-btn").addEventListener("click", resetForm);
   document.getElementById("post-form").addEventListener("submit", onPostSubmit);
@@ -846,6 +924,13 @@ async function renderRoot() {
 
   root.innerHTML = dashboardHTML();
   wireDashboard();
+
+  try {
+    document.getElementById("f-ozet").value = await loadOzet();
+  } catch (e) {
+    document.getElementById("ozet-status").textContent = "Özet yüklenemedi.";
+  }
+
   await loadPosts();
   renderArchive();
 }

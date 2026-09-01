@@ -2,6 +2,13 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8">
+    <script>
+      try {
+        if (localStorage.getItem("yigitclub_theme") === "light") {
+          document.documentElement.dataset.theme = "light";
+        }
+      } catch (e) {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yükleniyor... | yigit.club</title>
     <link rel="stylesheet" href="css/style.css">
@@ -10,17 +17,33 @@
   <body>
 
     <header>
-      <a href="index.html" class="logo">yigit.club</a>
-      <nav id="site-nav"></nav>
+      <a href="index.html" class="logo" id="site-logo" aria-label="yigit.club">
+        <span class="logo-bold"></span><span class="logo-italic"></span><span class="logo-cursor"></span>
+      </a>
+      <div class="header-right">
+        <nav id="site-nav"></nav>
+        <div class="nav-search">
+          <input type="search" id="site-search" placeholder="Ara...">
+          <div id="search-results" class="search-results"></div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Tema değiştir"></button>
+      </div>
     </header>
 
     <article id="post-content">
       <p style="color:#a1a1aa;">Yükleniyor...</p>
     </article>
 
-    <script src="js/site.js"></script>
+    <footer>
+      <p>yigit.club</p>
+    </footer>
+
+    <script src="js/site.js?v=3"></script>
     <script>
+      initTheme();
+      initLogoTyping();
       renderNav("", "kategori/");
+      initSearch("");
       renderPost("#post-content");
     </script>
 

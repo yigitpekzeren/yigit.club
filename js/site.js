@@ -2,6 +2,10 @@ const CMS_REPO = "yigitpekzeren/yigit.club";
 const CMS_BRANCH = "main";
 const DATA_FOLDER = "notlar-data";
 const CATEGORIES_FILE = "kategoriler.json";
+const OZET_FILE = "ozet.json";
+const THEME_KEY = "yigitclub_theme";
+
+let __notlarCache = null;
 
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -33,6 +37,8 @@ async function renderNav(fetchPrefix, navPrefix) {
 }
 
 async function fetchAllNotlar() {
+  if (__notlarCache) return __notlarCache;
+
   const listUrl = `https://api.github.com/repos/${CMS_REPO}/contents/${DATA_FOLDER}?ref=${CMS_BRANCH}`;
   const listRes = await fetch(listUrl);
   if (!listRes.ok) throw new Error("Yazı listesi alınamadı");
@@ -48,6 +54,7 @@ async function fetchAllNotlar() {
   );
 
   posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+  __notlarCache = posts;
   return posts;
 }
 
@@ -158,7 +165,129 @@ async function renderPost(containerSelector) {
       container.innerHTML = `${metaHtml}<div class="post-thread">${entriesHtml}</div>`;
     }
   } catch (e) {
+    document.title = "Yazı bulunamadı | yigit.club";
     container.innerHTML = '<p style="color:#a1a1aa;">Yazı yüklenemedi.</p>';
+    console.error(e);
+  }
+}
+
+/* ---------- tema ---------- */
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const btn = document.getElementById("theme-toggle");
+  if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  applyTheme(saved === "light" ? "light" : "dark");
+
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+  });
+}
+
+/* ---------- logo yazma animasyonu ---------- */
+
+function initLogoTyping() {
+  const el = document.getElementById("site-logo");
+  if (!el) return;
+  const boldEl = el.querySelector(".logo-bold");
+  const italicEl = el.querySelector(".logo-italic");
+  if (!boldEl || !italicEl) return;
+
+  const boldFull = "yigit.";
+  const italicFull = "club";
+
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    boldEl.textContent = boldFull;
+    italicEl.textContent = italicFull;
+    return;
+  }
+
+  let i = 0;
+  const full = boldFull + italicFull;
+  const timer = setInterval(() => {
+    i += 1;
+    boldEl.textContent = full.slice(0, i).slice(0, boldFull.length);
+    italicEl.textContent = full.slice(boldFull.length, i);
+    if (i >= full.length) clearInterval(timer);
+  }, 90);
+}
+
+/* ---------- arama ---------- */
+
+function renderSearchResults(matches, box, pathPrefix) {
+  if (matches.length === 0) {
+    box.innerHTML = '<div class="search-empty">Sonuç bulunamadı</div>';
+  } else {
+    box.innerHTML = matches
+      .map(
+        (p) => `
+      <a class="search-result" href="${pathPrefix}post.html?slug=${encodeURIComponent(p.slug)}">
+        <span class="search-result-title">${escapeHtml(p.title)}</span>
+        <span class="search-result-meta">${escapeHtml(p.category || "genel")}</span>
+      </a>
+    `
+      )
+      .join("");
+  }
+  box.classList.add("open");
+}
+
+function initSearch(pathPrefix) {
+  const input = document.getElementById("site-search");
+  const box = document.getElementById("search-results");
+  if (!input || !box) return;
+
+  input.addEventListener("input", async () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      box.innerHTML = "";
+      box.classList.remove("open");
+      return;
+    }
+    try {
+      const posts = await fetchAllNotlar();
+      const matches = posts
+        .filter(
+          (p) =>
+            (p.title || "").toLowerCase().includes(q) ||
+            (p.category || "").toLowerCase().includes(q) ||
+            (p.subcategory || "").toLowerCase().includes(q)
+        )
+        .slice(0, 8);
+      renderSearchResults(matches, box, pathPrefix);
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  input.addEventListener("focus", () => {
+    if (box.innerHTML) box.classList.add("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".nav-search")) box.classList.remove("open");
+  });
+}
+
+/* ---------- ana sayfa özeti ---------- */
+
+async function renderOzet(fetchPrefix) {
+  const el = document.getElementById("ozet");
+  if (!el) return;
+  try {
+    const res = await fetch(`${fetchPrefix}${OZET_FILE}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    el.innerHTML = window.marked ? marked.parse(data.text || "") : escapeHtml(data.text || "");
+  } catch (e) {
     console.error(e);
   }
 }

@@ -8,7 +8,7 @@
   display: block;
   margin: 16px 0 6px;
   font-size: 13px;
-  color: #a1a1aa;
+  color: var(--muted);
 }
 
 .admin-dashboard input[type="text"],
@@ -20,11 +20,11 @@
 .admin-gate input[type="text"],
 .admin-gate input[type="password"] {
   width: 100%;
-  background-color: #18181b;
-  border: 1px solid #27272a;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
-  color: #f4f4f5;
+  color: var(--text);
   font-family: inherit;
   font-size: 14px;
 }
@@ -34,11 +34,12 @@
 }
 
 .admin-dashboard input[type="file"] {
-  color: #a1a1aa;
+  color: var(--muted);
   font-size: 13px;
 }
 
 .admin-form button[type="submit"],
+#ozet-save-btn,
 .btn-secondary,
 .btn-danger,
 .admin-post-actions button {
@@ -51,20 +52,28 @@
   font-family: inherit;
 }
 
-.admin-form button[type="submit"] {
-  background-color: #f4f4f5;
-  color: #09090b;
+.admin-form button[type="submit"],
+#ozet-save-btn {
+  background-color: var(--text);
+  color: var(--bg);
 }
 
-.admin-form button[type="submit"]:disabled {
+.admin-form button[type="submit"]:disabled,
+#ozet-save-btn:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
 .btn-secondary {
   background-color: transparent;
-  border-color: #27272a;
-  color: #f4f4f5;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-danger {
+  background-color: transparent;
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .admin-topbar {
@@ -72,6 +81,43 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+}
+
+.admin-ozet-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+}
+
+.admin-ozet-section summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-ozet-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-ozet-section summary h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-ozet-section summary h2::before {
+  content: "▸";
+  font-size: 13px;
+  color: var(--muted-2);
+  transition: transform 0.15s ease;
+}
+
+.admin-ozet-section[open] summary h2::before {
+  transform: rotate(90deg);
+}
+
+.admin-ozet-section p.hint {
+  margin-top: 12px;
 }
 
 .admin-columns-3 {
@@ -83,13 +129,13 @@
 
 .hint {
   font-weight: 400;
-  color: #71717a;
+  color: var(--muted-2);
   text-transform: none;
   letter-spacing: normal;
 }
 
 .slug-input {
-  color: #71717a !important;
+  color: var(--muted-2) !important;
   font-size: 13px !important;
 }
 
@@ -121,8 +167,8 @@
 
 .md-toolbar button {
   background: transparent;
-  border: 1px solid #27272a;
-  color: #f4f4f5;
+  border: 1px solid var(--border);
+  color: var(--text);
   border-radius: 6px;
   width: 32px;
   height: 32px;
@@ -135,7 +181,7 @@
 }
 
 .photo-block {
-  border: 1px solid #27272a;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 20px;
@@ -188,7 +234,7 @@
 }
 
 .archive-year {
-  border: 1px solid #27272a;
+  border: 1px solid var(--border);
   border-radius: 10px;
   margin-bottom: 10px;
   padding: 10px 12px;
@@ -200,7 +246,7 @@
 }
 
 .archive-count {
-  color: #71717a;
+  color: var(--muted-2);
   font-weight: 400;
   font-size: 13px;
 }
@@ -213,20 +259,20 @@
 }
 
 .archive-post {
-  border: 1px solid #27272a;
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .archive-post.expanded {
-  border-color: #52525b;
+  border-color: var(--border-strong);
 }
 
 .archive-post-header {
   width: 100%;
   background: transparent;
   border: none;
-  color: #f4f4f5;
+  color: var(--text);
   text-align: left;
   padding: 10px 12px;
   cursor: pointer;
@@ -238,7 +284,7 @@
 
 .archive-expanded {
   padding: 0 12px 12px;
-  border-top: 1px solid #27272a;
+  border-top: 1px solid var(--border);
 }
 
 .archive-actions {
@@ -264,7 +310,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 6px 0;
-  border-top: 1px solid #27272a;
+  border-top: 1px solid var(--border);
 }
 
 .archive-entry .btn-danger {
@@ -275,6 +321,7 @@
 .admin-form-actions {
   margin-top: 16px;
   display: flex;
+  align-items: center;
   gap: 12px;
 }
 
@@ -284,7 +331,7 @@
 
 .admin-post-meta {
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--muted);
   margin-top: 4px;
 }
 
