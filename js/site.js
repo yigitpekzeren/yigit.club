@@ -172,7 +172,9 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
 }
 
 function entryHTML(entry) {
-  const bodyHtml = window.marked ? marked.parse(entry.body || "") : escapeHtml(entry.body || "");
+  const bodyHtml = entry.bodyFormat === "html"
+    ? entry.body || ""
+    : window.marked ? marked.parse(entry.body || "") : escapeHtml(entry.body || "");
   return `
     <div class="post-entry">
       <div class="icerik">${bodyHtml}</div>

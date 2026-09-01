@@ -237,7 +237,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=9"></script>
+    <script src="../js/site.js?v=10"></script>
     <script>
       initTheme();
       initLogoTyping();
@@ -448,6 +448,40 @@ function updatePhotoBlockVisibility() {
   document.getElementById("photo-block").style.display = category === "fotograf" ? "" : "none";
 }
 
+function getBodyHtml() {
+  return document.getElementById("f-body").innerHTML.trim();
+}
+
+function isBodyEmpty() {
+  return !document.getElementById("f-body").textContent.trim();
+}
+
+function setBodyHtml(content, format) {
+  const editor = document.getElementById("f-body");
+  if (!content) {
+    editor.innerHTML = "";
+    return;
+  }
+  editor.innerHTML = format === "html" ? content : marked.parse(content);
+}
+
+function applyWysiwygFormat(type) {
+  const editor = document.getElementById("f-body");
+  editor.focus();
+  if (type === "bold") {
+    document.execCommand("bold");
+  } else if (type === "italic") {
+    document.execCommand("italic");
+  } else if (type === "h2") {
+    document.execCommand("formatBlock", false, "h2");
+  } else if (type === "link") {
+    const url = prompt("Bağlantı adresi:", "https://");
+    if (url) document.execCommand("createLink", false, url);
+  } else if (type === "list") {
+    document.execCommand("insertUnorderedList");
+  }
+}
+
 /* ---------- login gate ---------- */
 
 function gateHTML() {
@@ -565,7 +599,7 @@ function dashboardHTML() {
           </div>
 
           <div id="f-body-row">
-            <label for="f-body" style="margin-top:0;">İçerik (markdown)</label>
+            <label style="margin-top:0;">İçerik</label>
             <div class="md-toolbar">
               <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
               <button type="button" data-md="italic" title="İtalik"><em>i</em></button>
@@ -573,7 +607,7 @@ function dashboardHTML() {
               <button type="button" data-md="link" title="Bağlantı">🔗</button>
               <button type="button" data-md="list" title="Liste">•</button>
             </div>
-            <textarea id="f-body" rows="18" placeholder="Markdown içerik..."></textarea>
+            <div id="f-body" class="body-wysiwyg" contenteditable="true" data-placeholder="İçeriğini yaz..."></div>
           </div>
 
           <p id="form-error" style="color:#f87171; min-height:18px;"></p>
@@ -757,7 +791,7 @@ async function handleSaveDraft() {
   const category = document.getElementById("f-category").value;
   const subcategory = document.getElementById("f-subcategory").value.trim();
   const stage = document.getElementById("f-stage").value;
-  const body = document.getElementById("f-body").value;
+  const body = getBodyHtml();
   const datetimeLocal = document.getElementById("f-datetime").value;
   const isoDatetime = datetimeLocal ? new Date(datetimeLocal).toISOString() : new Date().toISOString();
   const imageCaption = document.getElementById("f-image-caption").value.trim();
@@ -782,7 +816,7 @@ async function handleSaveDraft() {
 
     const path = `${DRAFTS_FOLDER}/${slug}.json`;
     const sha = uiState.draftSlug === slug ? uiState.draftSha : (await ghGetFile(path))?.sha;
-    const draft = { title, date: isoDatetime, category, subcategory, stage, image, imageCaption, body };
+    const draft = { title, date: isoDatetime, category, subcategory, stage, image, imageCaption, body, bodyFormat: "html" };
     const content = utf8ToBase64(JSON.stringify(draft, null, 2) + "\n");
     const res = await ghPutFile(path, content, `Taslak kaydet: ${slug}`, sha);
 
@@ -828,7 +862,7 @@ function startEditDraft(slug) {
   document.getElementById("f-datetime-row").style.display = "";
   document.getElementById("f-body-row").style.display = "";
   setDatetimeValue(d.date ? new Date(d.date) : new Date());
-  document.getElementById("f-body").value = d.body || "";
+  setBodyHtml(d.body, d.bodyFormat);
   document.getElementById("cropper-wrap").style.display = "none";
   document.getElementById("f-photo-file").value = "";
   state.croppedBlob = null;
@@ -914,6 +948,7 @@ function resetForm() {
   document.getElementById("cancel-edit-btn").style.display = "none";
   document.getElementById("draft-save-btn").style.display = "";
   document.getElementById("form-error").textContent = "";
+  document.getElementById("f-body").innerHTML = "";
   updatePhotoBlockVisibility();
 }
 
@@ -988,7 +1023,7 @@ function startAddEntry(slug) {
   uiState.targetSha = p.sha;
   uiState.targetPost = p;
   fillMetaFields(p);
-  document.getElementById("f-body").value = "";
+  document.getElementById("f-body").innerHTML = "";
   document.getElementById("form-title").textContent = `Yeni Girdi: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Girdi Ekle";
   document.getElementById("cancel-edit-btn").style.display = "";
@@ -1007,7 +1042,7 @@ function startEditEntry(slug, index) {
   uiState.targetPost = p;
   uiState.editingEntryIndex = index;
   fillMetaFields(p);
-  document.getElementById("f-body").value = entry.body || "";
+  setBodyHtml(entry.body, entry.bodyFormat);
   setDatetimeValue(new Date(entry.date));
   document.getElementById("form-title").textContent = `Girdiyi Düzenle: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Girdiyi Güncelle";
@@ -1100,7 +1135,7 @@ async function onPostSubmit(e) {
   const category = document.getElementById("f-category").value;
   const subcategory = document.getElementById("f-subcategory").value.trim();
   const stage = document.getElementById("f-stage").value;
-  const body = document.getElementById("f-body").value;
+  const body = getBodyHtml();
   const datetimeLocal = document.getElementById("f-datetime").value;
   const isoDatetime = datetimeLocal ? new Date(datetimeLocal).toISOString() : new Date().toISOString();
   const imageCaption = document.getElementById("f-image-caption").value.trim();
@@ -1109,7 +1144,7 @@ async function onPostSubmit(e) {
     errorEl.textContent = "Başlık ve slug zorunlu.";
     return;
   }
-  if (uiState.mode !== "edit-meta" && !body.trim()) {
+  if (uiState.mode !== "edit-meta" && isBodyEmpty()) {
     errorEl.textContent = "İçerik boş olamaz.";
     return;
   }
@@ -1148,12 +1183,12 @@ async function onPostSubmit(e) {
         }
         sha = existing.sha;
       }
-      post = { title, date: isoDatetime, category, subcategory, stage, image, imageCaption, entries: [{ date: isoDatetime, body }] };
+      post = { title, date: isoDatetime, category, subcategory, stage, image, imageCaption, entries: [{ date: isoDatetime, body, bodyFormat: "html" }] };
     } else if (uiState.mode === "add-entry") {
       const target = uiState.targetPost;
       path = `${POSTS_FOLDER}/${target.slug}.json`;
       sha = uiState.targetSha;
-      post = { ...target, entries: [...(target.entries || []), { date: isoDatetime, body }] };
+      post = { ...target, entries: [...(target.entries || []), { date: isoDatetime, body, bodyFormat: "html" }] };
       delete post.slug;
       delete post.sha;
     } else if (uiState.mode === "edit-entry") {
@@ -1161,7 +1196,7 @@ async function onPostSubmit(e) {
       path = `${POSTS_FOLDER}/${target.slug}.json`;
       sha = uiState.targetSha;
       const updatedEntries = [...(target.entries || [])];
-      updatedEntries[uiState.editingEntryIndex] = { date: isoDatetime, body };
+      updatedEntries[uiState.editingEntryIndex] = { date: isoDatetime, body, bodyFormat: "html" };
       post = { ...target, image, entries: updatedEntries };
       delete post.slug;
       delete post.sha;
@@ -1267,8 +1302,10 @@ function wireDashboard() {
   document.getElementById("confirm-add-category").addEventListener("click", handleAddCategory);
 
   document.querySelectorAll(".md-toolbar:not(#ozet-toolbar) button").forEach((btn) => {
-    btn.addEventListener("click", () => applyMdFormat(document.getElementById("f-body"), btn.dataset.md));
+    btn.addEventListener("mousedown", (e) => e.preventDefault());
+    btn.addEventListener("click", () => applyWysiwygFormat(btn.dataset.md));
   });
+  document.execCommand("defaultParagraphSeparator", false, "p");
   document.querySelectorAll("#ozet-toolbar button").forEach((btn) => {
     btn.addEventListener("click", () => applyMdFormat(document.getElementById("f-ozet"), btn.dataset.md));
   });

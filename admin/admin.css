@@ -462,6 +462,67 @@
   font-size: 13px;
 }
 
+.body-wysiwyg {
+  width: 100%;
+  min-height: 360px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-y: auto;
+}
+
+.body-wysiwyg:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+
+.body-wysiwyg:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-2);
+}
+
+.body-wysiwyg :first-child {
+  margin-top: 0;
+}
+
+.body-wysiwyg h2 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  margin: 18px 0 8px;
+}
+
+.body-wysiwyg p {
+  margin: 0 0 12px;
+}
+
+.body-wysiwyg ul,
+.body-wysiwyg ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.body-wysiwyg a {
+  color: var(--text);
+}
+
+.body-wysiwyg strong {
+  font-weight: 700;
+}
+
+.body-wysiwyg em {
+  font-style: italic;
+}
+
+.body-wysiwyg img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
 .admin-col-content textarea {
   min-height: 360px;
 }
