@@ -124,6 +124,12 @@
   cursor: default;
 }
 
+#submit-btn,
+#draft-save-btn {
+  padding: 12px 28px;
+  font-size: 16px;
+}
+
 .btn-secondary {
   background-color: transparent;
   border-color: var(--border);
