@@ -1,0 +1,43 @@
+backend:
+  name: git-gateway
+  repo: yigitpekzeren/yigit.club
+  branch: main
+  auth_type: pkce
+  base_url: https://auth.decapbridge.com
+  auth_endpoint: /sites/3c65ce4b-12fe-4de0-ab7a-708b69b23937/pkce
+  auth_token_endpoint: /sites/3c65ce4b-12fe-4de0-ab7a-708b69b23937/token
+  gateway_url: https://gateway.decapbridge.com
+  commit_messages:
+    create: "Create {{collection}} \"{{slug}}\" - {{author-name}} via DecapBridge"
+    update: "Update {{collection}} \"{{slug}}\" - {{author-name}} via DecapBridge"
+    delete: "Delete {{collection}} \"{{slug}}\" - {{author-name}} via DecapBridge"
+    uploadMedia: "Upload \"{{path}}\" - {{author-name}} via DecapBridge"
+    deleteMedia: "Delete \"{{path}}\" - {{author-name}} via DecapBridge"
+
+auth:
+  email_claim: email
+  first_name_claim: first_name
+  last_name_claim: last_name
+  avatar_url_claim: avatar_url
+
+logo_url: https://decapbridge.com/decapcms-with-bridge.svg
+site_url: https://mellifluous-eclair-b32533.netlify.app
+
+media_folder: "public/images"
+public_folder: "/images"
+
+collections:
+  - name: "notlar"
+    label: "Bahçe Notları & Yazılar"
+    folder: "src/pages/notlar"
+    create: true
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Şablon", name: "layout", widget: "hidden", default: "../../layouts/PostLayout.astro" }
+      - { label: "Başlık", name: "title", widget: "string" }
+      - { label: "Tarih", name: "date", widget: "datetime" }
+      - { label: "Ana Kategori", name: "category", widget: "string", hint: "küçük harf, boşluksuz (örn: koşu)" }
+      - { label: "Alt Kategori", name: "subcategory", widget: "string", required: false }
+      - { label: "Kahve Aşaması", name: "stage", widget: "select", options: ["🫘 Çekirdek", "⏳ Demleniyor", "☕ Fincanda"] }
+      - { label: "İçerik", name: "body", widget: "markdown" }
