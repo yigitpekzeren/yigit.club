@@ -201,6 +201,10 @@ function kategoriPageTemplate(slug, label) {
       } catch (e) {}
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="yigit.club">
     <title>${safeLabel} | yigit.club</title>
     <link rel="stylesheet" href="../css/style.css?v=6">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
@@ -519,45 +523,47 @@ function dashboardHTML() {
 
       <div class="admin-columns-3">
         <section class="admin-col-meta">
-          <h2 id="form-title">Yeni Yazı</h2>
-          <form id="post-form" class="admin-form">
-            <label for="f-title">Başlık</label>
-            <input type="text" id="f-title" required>
+          <details class="admin-meta-accordion" id="meta-accordion" open>
+            <summary><h2 id="form-title">Yeni Yazı</h2></summary>
+            <form id="post-form" class="admin-form">
+              <label for="f-title">Başlık</label>
+              <input type="text" id="f-title" required>
 
-            <label for="f-slug">Slug <span class="hint">dosya/URL adı</span></label>
-            <input type="text" id="f-slug" class="slug-input" required>
+              <label for="f-slug">Slug <span class="hint">dosya/URL adı</span></label>
+              <input type="text" id="f-slug" class="slug-input" required>
 
-            <label for="f-category">Ana Kategori</label>
-            <div class="category-row">
-              <select id="f-category">${categoryOptionsHtml("genel")}</select>
-              <button type="button" id="add-category-btn" class="btn-secondary" title="Yeni kategori ekle">+</button>
-            </div>
-            <div id="new-category-form" class="new-category-form" style="display:none;">
-              <input type="text" id="new-category-label" placeholder="Kategori adı (örn: Seyahat)">
-              <button type="button" id="confirm-add-category" class="btn-secondary">Ekle</button>
-            </div>
+              <label for="f-category">Ana Kategori</label>
+              <div class="category-row">
+                <select id="f-category">${categoryOptionsHtml("genel")}</select>
+                <button type="button" id="add-category-btn" class="btn-secondary" title="Yeni kategori ekle">+</button>
+              </div>
+              <div id="new-category-form" class="new-category-form" style="display:none;">
+                <input type="text" id="new-category-label" placeholder="Kategori adı (örn: Seyahat)">
+                <button type="button" id="confirm-add-category" class="btn-secondary">Ekle</button>
+              </div>
 
-            <label for="f-subcategory">Alt Kategori (opsiyonel)</label>
-            <input type="text" id="f-subcategory">
+              <label for="f-subcategory">Alt Kategori (opsiyonel)</label>
+              <input type="text" id="f-subcategory">
 
-            <label for="f-stage">Kahve Aşaması</label>
-            <select id="f-stage">
-              <option value="🫘 Çekirdek">🫘 Çekirdek</option>
-              <option value="⏳ Demleniyor">⏳ Demleniyor</option>
-              <option value="☕ Fincanda">☕ Fincanda</option>
-            </select>
+              <label for="f-stage">Kahve Aşaması</label>
+              <select id="f-stage">
+                <option value="🫘 Çekirdek">🫘 Çekirdek</option>
+                <option value="⏳ Demleniyor">⏳ Demleniyor</option>
+                <option value="☕ Fincanda">☕ Fincanda</option>
+              </select>
 
-            <div id="f-datetime-row">
-              <label for="f-datetime">Tarih ve Saat</label>
-              <input type="datetime-local" id="f-datetime">
-            </div>
+              <div id="f-datetime-row">
+                <label for="f-datetime">Tarih ve Saat</label>
+                <input type="datetime-local" id="f-datetime">
+              </div>
 
-            <p id="form-error" style="color:#f87171; min-height:18px;"></p>
-            <div class="admin-form-actions">
-              <button type="submit" id="submit-btn">Yayınla</button>
-              <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
-            </div>
-          </form>
+              <p id="form-error" style="color:#f87171; min-height:18px;"></p>
+              <div class="admin-form-actions">
+                <button type="submit" id="submit-btn">Yayınla</button>
+                <button type="button" id="cancel-edit-btn" style="display:none;" class="btn-secondary">İptal</button>
+              </div>
+            </form>
+          </details>
         </section>
 
         <section class="admin-col-content">
@@ -791,6 +797,8 @@ function startEditMeta(slug) {
   uiState.targetSha = p.sha;
   uiState.targetPost = p;
   fillMetaFields(p);
+  const metaAccordion = document.getElementById("meta-accordion");
+  if (metaAccordion) metaAccordion.open = true;
   document.getElementById("form-title").textContent = `Bilgileri Düzenle: ${p.title}`;
   document.getElementById("submit-btn").textContent = "Bilgileri Güncelle";
   document.getElementById("cancel-edit-btn").style.display = "";
@@ -991,6 +999,11 @@ async function loadPosts() {
 /* ---------- kurulum ---------- */
 
 function wireDashboard() {
+  const metaAccordion = document.getElementById("meta-accordion");
+  if (metaAccordion && window.matchMedia("(max-width: 1000px)").matches) {
+    metaAccordion.open = false;
+  }
+
   document.getElementById("logout-btn").addEventListener("click", () => {
     localStorage.removeItem(TOKEN_KEY);
     renderRoot();
