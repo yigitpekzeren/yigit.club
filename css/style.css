@@ -91,6 +91,21 @@ header a {
   }
 }
 
+.menu-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -105,8 +120,16 @@ nav {
   color: var(--muted);
 }
 
+nav a {
+  text-transform: lowercase;
+}
+
 nav a:hover {
   color: var(--text);
+}
+
+.kategori-baslik {
+  text-transform: lowercase;
 }
 
 .nav-search {
@@ -263,6 +286,10 @@ nav a:hover {
   border-radius: 999px;
 }
 
+.kart-kategori {
+  text-transform: lowercase;
+}
+
 .kart-baslik {
   font-size: 17px;
   font-weight: 500;
@@ -395,6 +422,34 @@ nav a:hover {
 
   .kart-foto.buyuk {
     aspect-ratio: 4 / 3;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .header-right {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .header-right.open {
+    display: flex;
+  }
+
+  .nav-search input[type="search"],
+  .nav-search input[type="search"]:focus {
+    width: 100%;
+  }
+
+  .search-results {
+    width: 100%;
+    right: auto;
+    left: 0;
   }
 }
 

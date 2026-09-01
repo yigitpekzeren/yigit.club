@@ -181,7 +181,7 @@ function kategoriPageTemplate(slug, label) {
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeLabel} | yigit.club</title>
-    <link rel="stylesheet" href="../css/style.css?v=3">
+    <link rel="stylesheet" href="../css/style.css?v=4">
   </head>
   <body>
 
@@ -189,7 +189,8 @@ function kategoriPageTemplate(slug, label) {
       <a href="../index.html" class="logo" id="site-logo" aria-label="yigit.club">
         <span class="logo-bold"></span><span class="logo-italic"></span><span class="logo-cursor"></span>
       </a>
-      <div class="header-right">
+      <button id="menu-toggle" class="menu-toggle" aria-label="Menü">☰</button>
+      <div class="header-right" id="header-right">
         <nav id="site-nav"></nav>
         <div class="nav-search">
           <input type="search" id="site-search" placeholder="Ara...">
@@ -199,7 +200,7 @@ function kategoriPageTemplate(slug, label) {
       </div>
     </header>
 
-    <h1 style="margin-bottom: 24px;">${safeLabel}</h1>
+    <h1 class="kategori-baslik" style="margin-bottom: 24px;">${safeLabel}</h1>
 
     <div class="grid" id="posts-grid" data-category="${escapeHtml(slug)}">
       <p style="color:#a1a1aa;">Yükleniyor...</p>
@@ -209,10 +210,11 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=4"></script>
+    <script src="../js/site.js?v=5"></script>
     <script>
       initTheme();
       initLogoTyping();
+      initMobileMenu();
       renderNav("../", "");
       initSearch("../");
       renderGrid("#posts-grid", { pathPrefix: "../" });

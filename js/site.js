@@ -6,11 +6,28 @@ const OZET_FILE = "ozet.json";
 const THEME_KEY = "yigitclub_theme";
 
 let __notlarCache = null;
+let __categoriesCache = null;
 
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";
   return div.innerHTML;
+}
+
+async function fetchCategories(fetchPrefix) {
+  if (__categoriesCache) return __categoriesCache;
+  try {
+    const res = await fetch(`${fetchPrefix}${CATEGORIES_FILE}?t=${Date.now()}`);
+    __categoriesCache = await res.json();
+  } catch (e) {
+    __categoriesCache = [];
+  }
+  return __categoriesCache;
+}
+
+function categoryLabel(slug, categories) {
+  const found = (categories || []).find((c) => c.slug === slug);
+  return found ? found.label : slug || "genel";
 }
 
 function formatDateTime(iso) {
@@ -26,8 +43,7 @@ async function renderNav(fetchPrefix, navPrefix) {
   const nav = document.getElementById("site-nav");
   if (!nav) return;
   try {
-    const res = await fetch(`${fetchPrefix}${CATEGORIES_FILE}?t=${Date.now()}`);
-    const cats = await res.json();
+    const cats = await fetchCategories(fetchPrefix);
     nav.innerHTML = cats
       .map((c) => `<a href="${navPrefix}${encodeURIComponent(c.slug)}.html">${escapeHtml(c.label)}</a>`)
       .join("");
@@ -58,8 +74,9 @@ async function fetchAllNotlar() {
   return posts;
 }
 
-function kartHTML(post, pathPrefix, buyuk) {
-  const kategoriEtiket = post.category || "genel";
+function kartHTML(post, pathPrefix, buyuk, categories) {
+  const kategoriEtiket = categoryLabel(post.category, categories);
+  const etiketText = post.subcategory ? `${kategoriEtiket} / ${post.subcategory}` : kategoriEtiket;
   const rozet = post.stage || "";
   const href = `${pathPrefix}post.html?slug=${encodeURIComponent(post.slug)}`;
 
@@ -67,7 +84,7 @@ function kartHTML(post, pathPrefix, buyuk) {
     return `
       <a href="${href}" class="kart kart-foto${buyuk ? " buyuk" : ""}" style="background-image:url('${pathPrefix}${escapeHtml(post.image)}')">
         <div class="kart-ust">
-          <span>${escapeHtml(kategoriEtiket)}</span>
+          <span class="kart-kategori">${escapeHtml(etiketText)}</span>
           ${rozet ? `<span class="rozet">${escapeHtml(rozet)}</span>` : ""}
         </div>
         <div>
@@ -81,7 +98,7 @@ function kartHTML(post, pathPrefix, buyuk) {
   return `
     <a href="${href}" class="kart${buyuk ? " buyuk" : ""}">
       <div class="kart-ust">
-        <span>${escapeHtml(kategoriEtiket)}</span>
+        <span class="kart-kategori">${escapeHtml(etiketText)}</span>
         ${rozet ? `<span class="rozet">${escapeHtml(rozet)}</span>` : ""}
       </div>
       <div class="kart-baslik">${escapeHtml(post.title)}</div>
@@ -95,7 +112,8 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
   const category = container.dataset.category || null;
 
   try {
-    let posts = await fetchAllNotlar();
+    const [allPosts, categories] = await Promise.all([fetchAllNotlar(), fetchCategories(pathPrefix)]);
+    let posts = allPosts;
     if (category) posts = posts.filter((p) => p.category === category);
 
     if (posts.length === 0) {
@@ -104,7 +122,7 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
     }
 
     container.innerHTML = posts
-      .map((p, i) => kartHTML(p, pathPrefix, i === 0 && !category))
+      .map((p, i) => kartHTML(p, pathPrefix, i === 0 && !category, categories))
       .join("");
   } catch (e) {
     container.innerHTML = '<p style="color:#a1a1aa;">Yazılar yüklenemedi.</p>';
@@ -139,12 +157,15 @@ async function renderPost(containerSelector) {
 
     document.title = `${post.title} | yigit.club`;
 
+    const categories = await fetchCategories("");
+    const kategoriEtiket = categoryLabel(post.category, categories);
+
     const entries = [...(post.entries || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
     const entriesHtml = entries.map(entryHTML).join("");
 
     const metaHtml = `
       <div class="kart-ust" style="margin-bottom: 16px;">
-        <span>${escapeHtml(post.category || "genel")}${post.subcategory ? " / " + escapeHtml(post.subcategory) : ""}</span>
+        <span class="kart-kategori">${escapeHtml(kategoriEtiket)}${post.subcategory ? " / " + escapeHtml(post.subcategory) : ""}</span>
         ${post.stage ? `<span class="rozet">${escapeHtml(post.stage)}</span>` : ""}
       </div>
       <h1 style="margin-bottom: 24px;">${escapeHtml(post.title)}</h1>
@@ -222,7 +243,7 @@ function initLogoTyping() {
 
 /* ---------- arama ---------- */
 
-function renderSearchResults(matches, box, pathPrefix) {
+function renderSearchResults(matches, box, pathPrefix, categories) {
   if (matches.length === 0) {
     box.innerHTML = '<div class="search-empty">Sonuç bulunamadı</div>';
   } else {
@@ -231,7 +252,7 @@ function renderSearchResults(matches, box, pathPrefix) {
         (p) => `
       <a class="search-result" href="${pathPrefix}post.html?slug=${encodeURIComponent(p.slug)}">
         <span class="search-result-title">${escapeHtml(p.title)}</span>
-        <span class="search-result-meta">${escapeHtml(p.category || "genel")}</span>
+        <span class="search-result-meta kart-kategori">${escapeHtml(categoryLabel(p.category, categories))}</span>
       </a>
     `
       )
@@ -253,7 +274,7 @@ function initSearch(pathPrefix) {
       return;
     }
     try {
-      const posts = await fetchAllNotlar();
+      const [posts, categories] = await Promise.all([fetchAllNotlar(), fetchCategories(pathPrefix)]);
       const matches = posts
         .filter(
           (p) =>
@@ -262,7 +283,7 @@ function initSearch(pathPrefix) {
             (p.subcategory || "").toLowerCase().includes(q)
         )
         .slice(0, 8);
-      renderSearchResults(matches, box, pathPrefix);
+      renderSearchResults(matches, box, pathPrefix, categories);
     } catch (e) {
       console.error(e);
     }
@@ -274,6 +295,24 @@ function initSearch(pathPrefix) {
 
   document.addEventListener("click", (e) => {
     if (!e.target.closest(".nav-search")) box.classList.remove("open");
+  });
+}
+
+/* ---------- mobil menü ---------- */
+
+function initMobileMenu() {
+  const btn = document.getElementById("menu-toggle");
+  const panel = document.getElementById("header-right");
+  if (!btn || !panel) return;
+
+  btn.addEventListener("click", () => {
+    panel.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!panel.classList.contains("open")) return;
+    if (e.target.closest("#header-right") || e.target.closest("#menu-toggle")) return;
+    panel.classList.remove("open");
   });
 }
 
