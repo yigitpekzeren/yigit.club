@@ -200,6 +200,7 @@
   border-radius: 8px;
   background-color: #000;
   cursor: grab;
+  touch-action: none;
 }
 
 .cropper-viewport img {
@@ -313,7 +314,25 @@
   border-top: 1px solid var(--border);
 }
 
-.archive-entry .btn-danger {
+.archive-entry-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.archive-entry-actions button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.archive-entry .btn-danger,
+.archive-entry-actions .btn-danger {
   padding: 4px 8px;
   font-size: 12px;
 }

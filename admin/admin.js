@@ -9,7 +9,7 @@ const CROP_W = 320;
 const CROP_H = 240;
 
 const state = { posts: [], categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null };
-const uiState = { mode: "new-post", targetSlug: null, targetSha: null, targetPost: null, slugTouched: false };
+const uiState = { mode: "new-post", targetSlug: null, targetSha: null, targetPost: null, slugTouched: false, editingEntryIndex: null };
 const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, naturalW: 0, naturalH: 0, dragging: false, lastX: 0, lastY: 0 };
 
 function escapeHtml(str) {
@@ -377,6 +377,24 @@ function wireCropper() {
   });
   window.addEventListener("mouseup", () => { cropState.dragging = false; });
 
+  viewport.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    cropState.dragging = true;
+    cropState.lastX = t.clientX;
+    cropState.lastY = t.clientY;
+  }, { passive: true });
+  window.addEventListener("touchmove", (e) => {
+    if (!cropState.dragging) return;
+    const t = e.touches[0];
+    cropState.offsetX += t.clientX - cropState.lastX;
+    cropState.offsetY += t.clientY - cropState.lastY;
+    cropState.lastX = t.clientX;
+    cropState.lastY = t.clientY;
+    clampOffsets();
+    applyCropTransform();
+  }, { passive: true });
+  window.addEventListener("touchend", () => { cropState.dragging = false; });
+
   zoom.addEventListener("input", () => {
     const coverScale = Math.max(CROP_W / cropState.naturalW, CROP_H / cropState.naturalH);
     cropState.scale = coverScale * parseFloat(zoom.value);
@@ -613,7 +631,10 @@ function archiveExpandedHTML(p) {
             (e) => `
           <div class="archive-entry">
             <span class="admin-post-meta">${escapeHtml(formatDateTimeAdmin(e.date))}</span>
-            <button type="button" class="btn-danger" data-action="delete-entry" data-slug="${escapeHtml(p.slug)}" data-index="${e.idx}">Sil</button>
+            <div class="archive-entry-actions">
+              <button type="button" data-action="edit-entry" data-slug="${escapeHtml(p.slug)}" data-index="${e.idx}">Düzenle</button>
+              <button type="button" class="btn-danger" data-action="delete-entry" data-slug="${escapeHtml(p.slug)}" data-index="${e.idx}">Sil</button>
+            </div>
           </div>
         `
           )
@@ -635,6 +656,7 @@ function resetForm() {
   uiState.targetSha = null;
   uiState.targetPost = null;
   uiState.slugTouched = false;
+  uiState.editingEntryIndex = null;
   state.croppedBlob = null;
 
   const form = document.getElementById("post-form");
@@ -701,6 +723,25 @@ function startAddEntry(slug) {
   document.getElementById("post-form").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function startEditEntry(slug, index) {
+  const p = state.posts.find((x) => x.slug === slug);
+  if (!p) return;
+  const entry = (p.entries || [])[index];
+  if (!entry) return;
+  uiState.mode = "edit-entry";
+  uiState.targetSlug = slug;
+  uiState.targetSha = p.sha;
+  uiState.targetPost = p;
+  uiState.editingEntryIndex = index;
+  fillMetaFields(p);
+  document.getElementById("f-body").value = entry.body || "";
+  document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date(entry.date));
+  document.getElementById("form-title").textContent = `Girdiyi Düzenle: ${p.title}`;
+  document.getElementById("submit-btn").textContent = "Girdiyi Güncelle";
+  document.getElementById("cancel-edit-btn").style.display = "";
+  document.getElementById("post-form").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function startEditMeta(slug) {
   const p = state.posts.find((x) => x.slug === slug);
   if (!p) return;
@@ -758,6 +799,8 @@ function onArchiveClick(e) {
     renderArchive();
   } else if (action === "add-entry") {
     startAddEntry(slug);
+  } else if (action === "edit-entry") {
+    startEditEntry(slug, parseInt(btn.dataset.index, 10));
   } else if (action === "edit-meta") {
     startEditMeta(slug);
   } else if (action === "delete-post") {
@@ -801,9 +844,18 @@ async function onPostSubmit(e) {
 
   try {
     let image = (uiState.targetPost && uiState.targetPost.image) || "";
-    if (category === "fotograf" && state.croppedBlob) {
-      const file = new File([state.croppedBlob], `${slug}.jpg`, { type: "image/jpeg" });
-      image = await uploadImage(file);
+
+    if (category === "fotograf") {
+      const fileInput = document.getElementById("f-photo-file");
+      if (!state.croppedBlob && fileInput.files[0] && cropState.img) {
+        state.croppedBlob = await cropToBlob();
+      }
+      if (state.croppedBlob) {
+        const file = new File([state.croppedBlob], `${slug}.jpg`, { type: "image/jpeg" });
+        image = await uploadImage(file);
+      } else if (!image && uiState.mode === "new-post") {
+        throw new Error("Fotoğraf kategorisi için bir görsel seçip kırpmalısın.");
+      }
     }
 
     let path;
@@ -827,6 +879,15 @@ async function onPostSubmit(e) {
       post = { ...target, entries: [...(target.entries || []), { date: isoDatetime, body }] };
       delete post.slug;
       delete post.sha;
+    } else if (uiState.mode === "edit-entry") {
+      const target = uiState.targetPost;
+      path = `${POSTS_FOLDER}/${target.slug}.json`;
+      sha = uiState.targetSha;
+      const updatedEntries = [...(target.entries || [])];
+      updatedEntries[uiState.editingEntryIndex] = { date: isoDatetime, body };
+      post = { ...target, image, entries: updatedEntries };
+      delete post.slug;
+      delete post.sha;
     } else {
       const target = uiState.targetPost;
       path = `${POSTS_FOLDER}/${target.slug}.json`;
@@ -837,7 +898,12 @@ async function onPostSubmit(e) {
     }
 
     const content = utf8ToBase64(JSON.stringify(post, null, 2) + "\n");
-    const message = { "new-post": `Yeni yazı: ${slug}`, "add-entry": `Yeni girdi: ${slug}`, "edit-meta": `Bilgi güncelle: ${slug}` }[uiState.mode];
+    const message = {
+      "new-post": `Yeni yazı: ${slug}`,
+      "add-entry": `Yeni girdi: ${slug}`,
+      "edit-entry": `Girdi güncelle: ${slug}`,
+      "edit-meta": `Bilgi güncelle: ${slug}`,
+    }[uiState.mode];
     await ghPutFile(path, content, message, sha);
 
     resetForm();
