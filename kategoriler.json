@@ -1,6 +1,22 @@
 [
-  { "slug": "miras", "label": "Miras" },
-  { "slug": "hobiler", "label": "Hobiler" },
-  { "slug": "atolye", "label": "Atölye" },
-  { "slug": "fotograf", "label": "Fotoğraf" }
+  {
+    "slug": "miras",
+    "label": "Miras"
+  },
+  {
+    "slug": "hobiler",
+    "label": "Hobiler"
+  },
+  {
+    "slug": "atolye",
+    "label": "Atölye"
+  },
+  {
+    "slug": "fotograf",
+    "label": "Fotoğraf"
+  },
+  {
+    "slug": "giris",
+    "label": "giriş"
+  }
 ]
