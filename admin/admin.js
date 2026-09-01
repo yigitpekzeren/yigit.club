@@ -559,25 +559,25 @@ function dashboardHTML() {
         </section>
 
         <section class="admin-col-content">
-          <div id="f-body-row">
-            <div id="photo-block" class="photo-block" style="display:none;">
-              <label>Fotoğraf</label>
-              <input type="file" id="f-photo-file" accept="image/*">
-              <div id="cropper-wrap" class="cropper-wrap" style="display:none;">
-                <div id="cropper-viewport" class="cropper-viewport">
-                  <img id="cropper-img" draggable="false">
-                </div>
-                <div class="cropper-controls">
-                  <input type="range" id="cropper-zoom" min="1" max="3" step="0.01" value="1">
-                  <button type="button" id="cropper-apply" class="btn-secondary">Kırp ve Kullan</button>
-                </div>
+          <div id="photo-block" class="photo-block" style="display:none;">
+            <label>Fotoğraf</label>
+            <input type="file" id="f-photo-file" accept="image/*">
+            <div id="cropper-wrap" class="cropper-wrap" style="display:none;">
+              <div id="cropper-viewport" class="cropper-viewport">
+                <img id="cropper-img" draggable="false">
               </div>
-              <p id="photo-preview-label" class="hint" style="display:none; margin-top:12px;">Mevcut görsel:</p>
-              <img id="photo-preview" class="photo-preview" style="display:none;">
-              <label for="f-image-caption">Görsel Açıklaması</label>
-              <input type="text" id="f-image-caption">
+              <div class="cropper-controls">
+                <input type="range" id="cropper-zoom" min="1" max="3" step="0.01" value="1">
+                <button type="button" id="cropper-apply" class="btn-secondary">Kırp ve Kullan</button>
+              </div>
             </div>
+            <p id="photo-preview-label" class="hint" style="display:none; margin-top:12px;">Mevcut görsel:</p>
+            <img id="photo-preview" class="photo-preview" style="display:none;">
+            <label for="f-image-caption">Görsel Açıklaması</label>
+            <input type="text" id="f-image-caption">
+          </div>
 
+          <div id="f-body-row">
             <label for="f-body" style="margin-top:0;">İçerik (markdown)</label>
             <div class="md-toolbar">
               <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
