@@ -18,6 +18,23 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+let __toastTimer = null;
+
+function showToast(message, isError) {
+  let toast = document.getElementById("admin-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "admin-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.className = `admin-toast show${isError ? " error" : ""}`;
+  clearTimeout(__toastTimer);
+  __toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3200);
+}
+
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -159,8 +176,10 @@ async function handleSaveOzet() {
     const res = await ghPutFile(OZET_DOSYASI, content, "Ana sayfa özetini güncelle", state.ozetSha);
     state.ozetSha = res.content.sha;
     statusEl.textContent = "Kaydedildi.";
+    showToast("Özet güncellendi.");
   } catch (e) {
     statusEl.textContent = `Kaydedilemedi: ${e.message}`;
+    showToast(`Özet kaydedilemedi: ${e.message}`, true);
   } finally {
     btn.disabled = false;
   }
@@ -181,7 +200,7 @@ function kategoriPageTemplate(slug, label) {
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeLabel} | yigit.club</title>
-    <link rel="stylesheet" href="../css/style.css?v=5">
+    <link rel="stylesheet" href="../css/style.css?v=6">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
   </head>
   <body>
@@ -211,7 +230,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=7"></script>
+    <script src="../js/site.js?v=8"></script>
     <script>
       initTheme();
       initLogoTyping();
@@ -261,8 +280,9 @@ async function handleAddCategory() {
     refreshCategorySelect();
     document.getElementById("f-category").value = slug;
     updatePhotoBlockVisibility();
+    showToast(`"${label}" kategorisi eklendi.`);
   } catch (e) {
-    alert(`Kategori eklenemedi: ${e.message}`);
+    showToast(`Kategori eklenemedi: ${e.message}`, true);
   } finally {
     btn.disabled = false;
   }
@@ -356,6 +376,7 @@ function wireCropper() {
       img.src = reader.result;
       document.getElementById("cropper-wrap").style.display = "";
       document.getElementById("photo-preview").style.display = "none";
+      document.getElementById("photo-preview-label").style.display = "none";
       state.croppedBlob = null;
     };
     reader.readAsDataURL(file);
@@ -408,6 +429,9 @@ function wireCropper() {
     const preview = document.getElementById("photo-preview");
     preview.src = URL.createObjectURL(blob);
     preview.style.display = "";
+    const previewLabel = document.getElementById("photo-preview-label");
+    previewLabel.textContent = "Yeni görsel (kaydedince yüklenecek):";
+    previewLabel.style.display = "";
     document.getElementById("cropper-wrap").style.display = "none";
   });
 }
@@ -548,6 +572,7 @@ function dashboardHTML() {
                   <button type="button" id="cropper-apply" class="btn-secondary">Kırp ve Kullan</button>
                 </div>
               </div>
+              <p id="photo-preview-label" class="hint" style="display:none; margin-top:12px;">Mevcut görsel:</p>
               <img id="photo-preview" class="photo-preview" style="display:none;">
               <label for="f-image-caption">Görsel Açıklaması</label>
               <input type="text" id="f-image-caption">
@@ -670,6 +695,7 @@ function resetForm() {
   document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date());
   document.getElementById("f-image-caption").value = "";
   document.getElementById("photo-preview").style.display = "none";
+  document.getElementById("photo-preview-label").style.display = "none";
   document.getElementById("cropper-wrap").style.display = "none";
   document.getElementById("f-photo-file").value = "";
   document.getElementById("form-title").textContent = "Yeni Yazı";
@@ -701,10 +727,23 @@ function fillMetaFields(p) {
   document.getElementById("f-datetime-row").style.display = editable ? "none" : "";
   document.getElementById("f-body-row").style.display = editable ? "none" : "";
   document.getElementById("f-datetime").value = toLocalDatetimeValue(new Date());
-  document.getElementById("photo-preview").style.display = "none";
   document.getElementById("cropper-wrap").style.display = "none";
   document.getElementById("f-photo-file").value = "";
   state.croppedBlob = null;
+
+  const preview = document.getElementById("photo-preview");
+  const previewLabel = document.getElementById("photo-preview-label");
+  if (p.image) {
+    preview.src = `../${p.image}`;
+    preview.style.display = "";
+    previewLabel.textContent = "Mevcut görsel:";
+    previewLabel.style.display = "";
+  } else {
+    preview.removeAttribute("src");
+    preview.style.display = "none";
+    previewLabel.style.display = "none";
+  }
+
   updatePhotoBlockVisibility();
 }
 
@@ -766,8 +805,9 @@ async function handleDeletePost(slug, sha) {
     }
     await loadPosts();
     renderArchive();
+    showToast("Yazı silindi.");
   } catch (e) {
-    alert(`Silinemedi: ${e.message}`);
+    showToast(`Silinemedi: ${e.message}`, true);
   }
 }
 
@@ -785,8 +825,9 @@ async function handleDeleteEntry(slug, index) {
     await ghPutFile(`${POSTS_FOLDER}/${slug}.json`, content, `Girdi sil: ${slug}`, p.sha);
     await loadPosts();
     renderArchive();
+    showToast("Girdi silindi.");
   } catch (e) {
-    alert(`Girdi silinemedi: ${e.message}`);
+    showToast(`Girdi silinemedi: ${e.message}`, true);
   }
 }
 
@@ -906,11 +947,20 @@ async function onPostSubmit(e) {
     }[uiState.mode];
     await ghPutFile(path, content, message, sha);
 
+    const successMessage = {
+      "new-post": "Yazı yayınlandı.",
+      "add-entry": "Girdi eklendi.",
+      "edit-entry": "Girdi güncellendi.",
+      "edit-meta": "Bilgiler güncellendi.",
+    }[uiState.mode];
+
     resetForm();
     await loadPosts();
     renderArchive();
+    showToast(successMessage);
   } catch (err) {
     errorEl.textContent = err.message;
+    showToast(err.message, true);
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalLabel;

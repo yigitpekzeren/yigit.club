@@ -10,14 +10,14 @@
       } catch (e) {}
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atölye | yigit.club</title>
-    <link rel="stylesheet" href="../css/style.css?v=6">
+    <title>Alt Kategori | yigit.club</title>
+    <link rel="stylesheet" href="css/style.css?v=6">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
   </head>
   <body>
 
     <header>
-      <a href="../index.html" class="logo" id="site-logo" aria-label="yigit.club">
+      <a href="index.html" class="logo" id="site-logo" aria-label="yigit.club">
         <span class="logo-bold"></span><span class="logo-italic"></span><span class="logo-cursor"></span>
       </a>
       <button id="menu-toggle" class="menu-toggle" aria-label="Menü">☰</button>
@@ -31,9 +31,9 @@
       </div>
     </header>
 
-    <h1 class="kategori-baslik" style="margin-bottom: 24px;">Atölye</h1>
+    <h1 class="kategori-baslik" id="page-title" style="margin-bottom: 24px;"></h1>
 
-    <div class="grid" id="posts-grid" data-category="atolye">
+    <div class="grid" id="posts-grid">
       <p style="color:#a1a1aa;">Yükleniyor...</p>
     </div>
 
@@ -41,14 +41,19 @@
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=8"></script>
+    <script src="js/site.js?v=8"></script>
     <script>
       initTheme();
       initLogoTyping();
       initMobileMenu();
-      renderNav("../", "");
-      initSearch("../");
-      renderGrid("#posts-grid", { pathPrefix: "../" });
+      renderNav("", "kategori/");
+      initSearch("");
+
+      const alt = new URLSearchParams(window.location.search).get("alt") || "";
+      document.getElementById("page-title").textContent = alt;
+      document.title = `${alt} | yigit.club`;
+      document.getElementById("posts-grid").dataset.subcategory = alt;
+      renderGrid("#posts-grid", { pathPrefix: "" });
     </script>
 
   </body>

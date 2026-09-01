@@ -30,6 +30,37 @@ function categoryLabel(slug, categories) {
   return found ? found.label : slug || "genel";
 }
 
+function kategoriEtiketHTML(post, pathPrefix, categories) {
+  const isRealCategory = (categories || []).some((c) => c.slug === post.category);
+  const label = escapeHtml(categoryLabel(post.category, categories));
+  const catHtml = isRealCategory
+    ? `<span class="kart-link" role="link" tabindex="0" data-href="${pathPrefix}kategori/${encodeURIComponent(post.category)}.html">${label}</span>`
+    : label;
+  if (!post.subcategory) return catHtml;
+  const subHtml = `<span class="kart-link" role="link" tabindex="0" data-href="${pathPrefix}alt-kategori.html?alt=${encodeURIComponent(post.subcategory)}">${escapeHtml(post.subcategory)}</span>`;
+  return `${catHtml} / ${subHtml}`;
+}
+
+document.addEventListener(
+  "click",
+  (e) => {
+    const link = e.target.closest(".kart-link");
+    if (!link) return;
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = link.dataset.href;
+  },
+  true
+);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const link = e.target.closest && e.target.closest(".kart-link");
+  if (!link) return;
+  e.preventDefault();
+  window.location.href = link.dataset.href;
+});
+
 function formatDateTime(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -80,8 +111,7 @@ async function fetchAllNotlar() {
 }
 
 function kartHTML(post, pathPrefix, buyuk, categories) {
-  const kategoriEtiket = categoryLabel(post.category, categories);
-  const etiketText = post.subcategory ? `${kategoriEtiket} / ${post.subcategory}` : kategoriEtiket;
+  const etiketHtml = kategoriEtiketHTML(post, pathPrefix, categories);
   const rozet = post.stage || "";
   const href = `${pathPrefix}post.html?slug=${encodeURIComponent(post.slug)}`;
 
@@ -89,7 +119,7 @@ function kartHTML(post, pathPrefix, buyuk, categories) {
     return `
       <a href="${href}" class="kart kart-foto${buyuk ? " buyuk" : ""}" style="background-image:url('${pathPrefix}${escapeHtml(post.image)}')">
         <div class="kart-ust">
-          <span class="kart-kategori">${escapeHtml(etiketText)}</span>
+          <span class="kart-kategori">${etiketHtml}</span>
           ${rozet ? `<span class="rozet">${escapeHtml(rozet)}</span>` : ""}
         </div>
         <div>
@@ -104,7 +134,7 @@ function kartHTML(post, pathPrefix, buyuk, categories) {
   return `
     <a href="${href}" class="kart${buyuk ? " buyuk" : ""}">
       <div class="kart-ust">
-        <span class="kart-kategori">${escapeHtml(etiketText)}</span>
+        <span class="kart-kategori">${etiketHtml}</span>
         ${rozet ? `<span class="rozet">${escapeHtml(rozet)}</span>` : ""}
       </div>
       <div>
@@ -119,11 +149,13 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
   const container = document.querySelector(containerSelector);
   if (!container) return;
   const category = container.dataset.category || null;
+  const subcategory = container.dataset.subcategory || null;
 
   try {
     const [allPosts, categories] = await Promise.all([fetchAllNotlar(), fetchCategories(pathPrefix)]);
     let posts = allPosts;
     if (category) posts = posts.filter((p) => p.category === category);
+    if (subcategory) posts = posts.filter((p) => p.subcategory === subcategory);
 
     if (posts.length === 0) {
       container.innerHTML = '<p style="color:#a1a1aa;">Bu kategoride henüz yazı yok.</p>';
@@ -131,7 +163,7 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
     }
 
     container.innerHTML = posts
-      .map((p, i) => kartHTML(p, pathPrefix, i === 0 && !category, categories))
+      .map((p, i) => kartHTML(p, pathPrefix, i === 0 && !category && !subcategory, categories))
       .join("");
   } catch (e) {
     container.innerHTML = '<p style="color:#a1a1aa;">Yazılar yüklenemedi.</p>';
@@ -167,14 +199,14 @@ async function renderPost(containerSelector) {
     document.title = `${post.title} | yigit.club`;
 
     const categories = await fetchCategories("");
-    const kategoriEtiket = categoryLabel(post.category, categories);
+    const etiketHtml = kategoriEtiketHTML(post, "", categories);
 
     const entries = [...(post.entries || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
     const entriesHtml = entries.map(entryHTML).join("");
 
     const metaHtml = `
       <div class="kart-ust" style="margin-bottom: 16px;">
-        <span class="kart-kategori">${escapeHtml(kategoriEtiket)}${post.subcategory ? " / " + escapeHtml(post.subcategory) : ""}</span>
+        <span class="kart-kategori">${etiketHtml}</span>
         ${post.stage ? `<span class="rozet">${escapeHtml(post.stage)}</span>` : ""}
       </div>
       <h1 class="post-baslik" style="margin-bottom: 24px;">${escapeHtml(post.title)}</h1>

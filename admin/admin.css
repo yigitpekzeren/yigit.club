@@ -3,6 +3,35 @@
   margin: 0 auto;
 }
 
+.admin-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: var(--text);
+  color: var(--bg);
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 200;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  max-width: 90vw;
+}
+
+.admin-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.admin-toast.error {
+  background-color: var(--danger-text);
+  color: #fff;
+}
+
 .admin-dashboard label,
 .admin-gate label {
   display: block;
