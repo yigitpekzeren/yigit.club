@@ -10,11 +10,7 @@
 
     <header>
       <a href="index.html" class="logo">yigit.club</a>
-      <nav>
-        <a href="kategori/miras.html">Miras</a>
-        <a href="kategori/hobiler.html">Hobiler</a>
-        <a href="kategori/atolye.html">Atölye</a>
-      </nav>
+      <nav id="site-nav"></nav>
     </header>
 
     <div class="grid" id="posts-grid">
@@ -23,6 +19,7 @@
 
     <script src="js/site.js"></script>
     <script>
+      renderNav("", "kategori/");
       renderGrid("#posts-grid", { pathPrefix: "" });
     </script>
 

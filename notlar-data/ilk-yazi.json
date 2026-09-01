@@ -1,9 +1,15 @@
 {
   "title": "Merhaba, burası yigit.club",
-  "date": "2026-09-01",
+  "date": "2026-09-01T10:00",
   "category": "genel",
   "subcategory": "",
   "stage": "🫘 Çekirdek",
   "image": "",
-  "body": "Bu benim dijital bahçemin ilk fidesi. Buradan itibaren yavaş yavaş büyüyecek."
+  "imageCaption": "",
+  "entries": [
+    {
+      "date": "2026-09-01T10:00",
+      "body": "Bu benim dijital bahçemin ilk fidesi. Buradan itibaren yavaş yavaş büyüyecek."
+    }
+  ]
 }

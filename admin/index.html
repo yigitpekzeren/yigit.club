@@ -6,24 +6,25 @@
     <title>Yönetim Paneli | yigit.club</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="admin.css">
+    <style>
+      body { max-width: 1100px; }
+    </style>
   </head>
   <body>
 
     <header>
       <a href="../index.html" class="logo">yigit.club</a>
-      <nav>
-        <a href="../kategori/miras.html">Miras</a>
-        <a href="../kategori/hobiler.html">Hobiler</a>
-        <a href="../kategori/atolye.html">Atölye</a>
-      </nav>
+      <nav id="site-nav"></nav>
     </header>
 
     <div id="admin-root">
       <p style="color:#a1a1aa;">Yükleniyor...</p>
     </div>
 
+    <script src="../js/site.js"></script>
     <script src="admin.js"></script>
     <script>
+      renderNav("../", "../kategori/");
       initAdmin();
     </script>
 

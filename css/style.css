@@ -121,3 +121,87 @@ nav a:hover {
   border-radius: 4px;
   font-size: 14px;
 }
+
+.kart-foto {
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  aspect-ratio: 4 / 3;
+}
+
+.kart-foto.buyuk {
+  aspect-ratio: 2.4 / 1;
+}
+
+.kart-foto::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0) 65%);
+}
+
+.kart-foto .kart-ust,
+.kart-foto .kart-baslik,
+.kart-foto-caption {
+  position: relative;
+  z-index: 1;
+}
+
+.kart-foto-caption {
+  font-size: 13px;
+  color: #d4d4d8;
+  margin-top: 4px;
+}
+
+.post-entry {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #27272a;
+}
+
+.post-entry:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.post-entry-time {
+  font-size: 12px;
+  color: #71717a;
+  margin-top: 8px;
+}
+
+.post-foto-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.post-foto-image {
+  flex: 1 1 40%;
+  min-width: 260px;
+}
+
+.post-foto-image img {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+
+.post-foto-caption {
+  color: #a1a1aa;
+  font-size: 13px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.post-foto-text {
+  flex: 1 1 55%;
+}
+
+@media (max-width: 720px) {
+  .post-foto-layout {
+    flex-direction: column;
+  }
+}
