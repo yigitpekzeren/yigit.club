@@ -181,7 +181,7 @@ function kategoriPageTemplate(slug, label) {
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeLabel} | yigit.club</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css?v=2">
   </head>
   <body>
 
@@ -209,7 +209,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=3"></script>
+    <script src="../js/site.js?v=4"></script>
     <script>
       initTheme();
       initLogoTyping();

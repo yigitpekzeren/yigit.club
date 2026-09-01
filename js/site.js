@@ -26,7 +26,7 @@ async function renderNav(fetchPrefix, navPrefix) {
   const nav = document.getElementById("site-nav");
   if (!nav) return;
   try {
-    const res = await fetch(`${fetchPrefix}${CATEGORIES_FILE}`);
+    const res = await fetch(`${fetchPrefix}${CATEGORIES_FILE}?t=${Date.now()}`);
     const cats = await res.json();
     nav.innerHTML = cats
       .map((c) => `<a href="${navPrefix}${encodeURIComponent(c.slug)}.html">${escapeHtml(c.label)}</a>`)
@@ -133,7 +133,7 @@ async function renderPost(containerSelector) {
   }
 
   try {
-    const res = await fetch(`${DATA_FOLDER}/${encodeURIComponent(slug)}.json`);
+    const res = await fetch(`${DATA_FOLDER}/${encodeURIComponent(slug)}.json?t=${Date.now()}`);
     if (!res.ok) throw new Error("Yazı bulunamadı");
     const post = await res.json();
 
@@ -283,7 +283,7 @@ async function renderOzet(fetchPrefix) {
   const el = document.getElementById("ozet");
   if (!el) return;
   try {
-    const res = await fetch(`${fetchPrefix}${OZET_FILE}`);
+    const res = await fetch(`${fetchPrefix}${OZET_FILE}?t=${Date.now()}`);
     if (!res.ok) return;
     const data = await res.json();
     el.innerHTML = window.marked ? marked.parse(data.text || "") : escapeHtml(data.text || "");
