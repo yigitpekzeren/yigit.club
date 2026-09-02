@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/feed.xsl"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>yigit.club</title>
@@ -21,7 +22,7 @@
       <guid isPermaLink="true">https://yigit.club/post.html?slug=ilk-yazi</guid>
       <pubDate>Tue, 01 Sep 2026 07:00:00 GMT</pubDate>
       <category>genel</category>
-      <description>Kısa bir süre önce yapay zekayla, spesifik olarak Gemini’la konuşuyordum. Konu şuydu: kendime bir kişisel web sitesi oluşturmalı mıydım? Aslında böyle bir şeye ihtiyacım olduğunu sanmıyordum. Paylaşacak öyle ahım şahım bir şeyim yoktu. İnsanlara gösterecek bir portfolyom, böyle bir siteden edinecek bir çıkarım da yoktu. Fakat her nedense, bir web sitesi aklıma düşmüştü. Gemini ile biraz konuştuk. Ondan, bana ihtiyaç durumumu anlamama yardımcı olacak sorular sormasını istedim. Web sitemle ilgili bazı beklentilerim vardı. Örneğin, onu aslında diğer insanların görmesi için, yoğun bir internet trafiği için açmak istemezdim. Daha çok kendim için, kendi içeriklerimi kendime en iyi hitap edecek şekilde paylaşmayı umardım. Sonra, bu içerikler herhalde öyle tamamen işle ilgili, ağır be profesyonel şey</description>
+      <description>Kısa bir süre önce yapay zekayla, spesifik olarak Gemini’la konuşuyordum. Konu şuydu: kendime bir kişisel web sitesi oluşturmalı mıydım? Aslında böyle bir şeye ihtiyacım olduğunu sanmıyordum. Paylaşacak öyle ahım şahım bir şeyim yoktu. İnsanlara gösterecek bir portfolyom, böyle bir siteden edinecek bir çıkarım da yoktu. Fakat her nedense, bir web sitesi aklıma düşmüştü. Gemini ile biraz konuştuk. Ondan, bana ihtiyaç durumumu anlamama yardımcı olacak sorular sormasını istedim. Web sitemle ilgili bazı beklentilerim vardı. Örneğin, onu aslında diğer insanların görmesi için, yoğun bir internet trafiği için açmak istemezdim. Daha çok kendim için, kendi içeriklerimi kendime en iyi hitap edecek şekilde paylaşmayı umardım. Sonra, bu içerikler herhalde öyle tamamen işle ilgili, ağır ve profesyonel şey</description>
     </item>
   </channel>
 </rss>
