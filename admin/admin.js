@@ -306,7 +306,7 @@ function kategoriPageTemplate(slug, label) {
     </div>
 
     <footer>
-      <p>yigit.club</p>
+      <p>yigit.club · <a href="../hakkinda.html">hakkında</a> · <a href="/feed.xml">RSS</a></p>
     </footer>
 
     <script src="../js/site.js?v=15"></script>
