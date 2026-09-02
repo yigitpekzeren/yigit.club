@@ -85,6 +85,19 @@ def read_env(name):
     """Ortam degiskenini oku; bos ya da eksikse aciklamali hata ver."""
     value = (os.environ.get(name) or "").strip()
     if not value:
+        # Sik yapilan hata: deger ayni sayfadaki 'Variables' sekmesine eklenir.
+        # Workflow bu ikisini VAR_ onekiyle ayrica okuyor, boylece ayirt edebiliyoruz.
+        if (os.environ.get("VAR_" + name) or "").strip():
+            fail(
+                "{name} 'Secrets' sekmesinde yok, ama 'Variables' sekmesinde duruyor.\n\n"
+                "O sayfada yan yana iki sekme var: Secrets ve Variables.\n"
+                "Bu deger Secrets sekmesinde olmali.\n\n"
+                "Yapilacak: Variables sekmesindeki {name} kaydini sil, sonra\n"
+                "Secrets sekmesinde 'New repository secret' ile yeniden ekle.\n\n"
+                "Ozellikle VAPID_PRIVATE_KEY icin onemli: Variables sekmesindeki\n"
+                "degerler sifrelenmez ve herkese acik depoda gorunur.".format(name=name)
+            )
+
         fail(
             "{name} ortam degiskeni bos ya da tanimli degil.\n\n"
             "GitHub Actions kullaniyorsan: repo > Settings > Secrets and variables\n"

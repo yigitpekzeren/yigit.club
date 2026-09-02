@@ -53,4 +53,10 @@ jobs:
           PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
           PUSH_TITLE: ${{ inputs.baslik }}
           PUSH_BODY: ${{ inputs.metin }}
+          # Ayni sayfadaki 'Variables' sekmesi. Bunlar dolu ama yukaridaki
+          # secret'lar bossa, deger yanlis sekmeye eklenmis demektir; script
+          # bunu ayirt edip ne yapilacagini soyluyor.
+          VAR_VAPID_PRIVATE_KEY: ${{ vars.VAPID_PRIVATE_KEY }}
+          VAR_VAPID_SUBJECT: ${{ vars.VAPID_SUBJECT }}
+          VAR_PUSH_SUBSCRIPTION: ${{ vars.PUSH_SUBSCRIPTION }}
         run: python send_push.py
