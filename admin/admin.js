@@ -545,8 +545,20 @@ const IZINLI_ETIKETLER = new Set(["P", "BR", "STRONG", "EM", "U", "H2", "UL", "O
 const ETIKET_ESLESMELERI = { B: "STRONG", I: "EM", H1: "H2", H3: "H2", H4: "H2", H5: "H2", H6: "H2" };
 const BLOK_ETIKETLER = new Set(["P", "DIV", "H1", "H2", "H3", "H4", "H5", "H6", "UL", "OL", "LI", "BLOCKQUOTE", "TABLE", "SECTION", "ARTICLE"]);
 
+/* Tehlikeli şemaları engelle, geri kalanına izin ver.
+   Önceden yalnızca http(s)/mailto/"/"/# kabul ediliyordu; bu yüzden site içi
+   göreli bağlantılar (ör. post.html?slug=ilk-yazi) sessizce siliniyordu.
+   Boşluk/kontrol karakteriyle gizlenmiş şemalar da yakalanır. */
 function guvenliHref(value) {
-  return /^(https?:\/\/|mailto:|\/|#)/i.test((value || "").trim()) ? value.trim() : null;
+  const ham = (value || "").trim();
+  if (!ham) return null;
+  const temiz = ham.replace(/\s/g, "").toLowerCase();
+  if (/^(javascript|data|vbscript|file):/.test(temiz)) return null;
+  return ham;
+}
+
+function disBaglantiMi(href) {
+  return /^(https?:\/\/|mailto:)/i.test((href || "").trim());
 }
 
 function sanitizeEditorHtml(html) {
@@ -602,7 +614,8 @@ function sanitizeEditorHtml(html) {
         node.removeAttribute(attr.name);
       });
 
-      if (tag === "A" && node.getAttribute("href")) {
+      // Yeni sekmede yalnızca dış bağlantılar açılır; site içi linkler aynı sekmede kalır.
+      if (tag === "A" && disBaglantiMi(node.getAttribute("href"))) {
         node.setAttribute("rel", "noopener noreferrer");
         node.setAttribute("target", "_blank");
       }
