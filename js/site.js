@@ -325,7 +325,11 @@ async function renderPost(containerSelector) {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   const btn = document.getElementById("theme-toggle");
-  if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
+  if (!btn) return;
+  // Etiket yalnızca mobil menüde görünür; masaüstünde düğme yine sade bir daire.
+  btn.innerHTML =
+    `<span class="tema-ikon">${theme === "light" ? "☀️" : "🌙"}</span>` +
+    `<span class="tema-etiket">Tema</span>`;
 }
 
 function initTheme() {
@@ -433,14 +437,20 @@ function initMobileMenu() {
   const panel = document.getElementById("header-right");
   if (!btn || !panel) return;
 
+  const durumBildir = () => btn.setAttribute("aria-expanded", panel.classList.contains("open") ? "true" : "false");
+  btn.setAttribute("aria-controls", "header-right");
+  durumBildir();
+
   btn.addEventListener("click", () => {
     panel.classList.toggle("open");
+    durumBildir();
   });
 
   document.addEventListener("click", (e) => {
     if (!panel.classList.contains("open")) return;
     if (e.target.closest("#header-right") || e.target.closest("#menu-toggle")) return;
     panel.classList.remove("open");
+    durumBildir();
   });
 }
 

@@ -224,6 +224,11 @@ nav a:hover {
   border-color: var(--border-strong);
 }
 
+/* Tema düğmesinin yazılı etiketi yalnızca mobil menüde gösterilir */
+.tema-etiket {
+  display: none;
+}
+
 .ozet {
   font-size: 26px;
   line-height: 1.6;
@@ -586,28 +591,71 @@ nav a:hover {
     display: inline-flex;
   }
 
+  /* Mobil menü: masaüstündeki yatay dizilim burada üç ayrı parçanın
+     alt alta yığılmasına yol açıyordu. Bunun yerine gerçek bir menü listesi:
+     her satır rahat dokunulabilir, aralar ince çizgiyle ayrılıyor. */
   .header-right {
     display: none;
     width: 100%;
     flex-direction: column;
     align-items: stretch;
-    gap: 14px;
-    margin-top: 16px;
+    gap: 0;
+    margin-top: 8px;
   }
 
   .header-right.open {
     display: flex;
   }
 
+  #site-nav {
+    flex-direction: column;
+    gap: 0;
+    font-size: 15px;
+  }
+
+  #site-nav a {
+    padding: 13px 2px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .nav-search {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
   .nav-search input[type="search"],
   .nav-search input[type="search"]:focus {
     width: 100%;
+    font-size: 16px; /* iOS'ta odaklanınca sayfayı yakınlaştırmasın */
   }
 
   .search-results {
     width: 100%;
     right: auto;
     left: 0;
+  }
+
+  /* Yetim 32px'lik daire yerine, diğerleriyle hizalı bir menü satırı */
+  .theme-toggle {
+    width: 100%;
+    height: auto;
+    border: none;
+    border-radius: 0;
+    padding: 13px 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .theme-toggle:hover {
+    border-color: transparent;
+  }
+
+  .tema-etiket {
+    display: inline;
   }
 }
 
