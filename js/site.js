@@ -1,6 +1,7 @@
 const CMS_REPO = "yigitpekzeren/yigit.club";
 const CMS_BRANCH = "main";
 const DATA_FOLDER = "notlar-data";
+const INDEX_FILE = "notlar-data/index.json";
 const CATEGORIES_FILE = "kategoriler.json";
 const OZET_FILE = "ozet.json";
 const THEME_KEY = "yigitclub_theme";
@@ -88,14 +89,35 @@ async function renderNav(fetchPrefix, navPrefix) {
   }
 }
 
-async function fetchAllNotlar() {
+/* Yazı listesi tek bir manifest dosyasından okunur: kendi alan adımızdan, tek istek.
+   Manifest'i admin panel her yayında yeniden üretir. GitHub API'si yalnızca
+   manifest yoksa/bozuksa devreye giren güvenlik ağıdır (API limiti: 60 istek/saat/IP). */
+async function fetchAllNotlar(fetchPrefix = "") {
   if (__notlarCache) return __notlarCache;
 
+  try {
+    const res = await fetch(`${fetchPrefix}${INDEX_FILE}?t=${Date.now()}`);
+    if (res.ok) {
+      const posts = await res.json();
+      if (Array.isArray(posts) && posts.length > 0) {
+        posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        __notlarCache = posts;
+        return posts;
+      }
+    }
+  } catch (e) {
+    /* manifest okunamadı; aşağıdaki API yedeğine düşülür */
+  }
+
+  return fetchNotlarFromApi();
+}
+
+async function fetchNotlarFromApi() {
   const listUrl = `https://api.github.com/repos/${CMS_REPO}/contents/${DATA_FOLDER}?ref=${CMS_BRANCH}`;
   const listRes = await fetch(listUrl);
   if (!listRes.ok) throw new Error("Yazı listesi alınamadı");
   const files = await listRes.json();
-  const jsonFiles = files.filter((f) => f.name.endsWith(".json"));
+  const jsonFiles = files.filter((f) => f.name.endsWith(".json") && f.name !== "index.json");
 
   const posts = await Promise.all(
     jsonFiles.map(async (f) => {
@@ -152,7 +174,7 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
   const subcategory = container.dataset.subcategory || null;
 
   try {
-    const [allPosts, categories] = await Promise.all([fetchAllNotlar(), fetchCategories(pathPrefix)]);
+    const [allPosts, categories] = await Promise.all([fetchAllNotlar(pathPrefix), fetchCategories(pathPrefix)]);
     let posts = allPosts;
     if (category) posts = posts.filter((p) => p.category === category);
     if (subcategory) posts = posts.filter((p) => p.subcategory === subcategory);
@@ -317,7 +339,7 @@ function initSearch(pathPrefix) {
       return;
     }
     try {
-      const [posts, categories] = await Promise.all([fetchAllNotlar(), fetchCategories(pathPrefix)]);
+      const [posts, categories] = await Promise.all([fetchAllNotlar(pathPrefix), fetchCategories(pathPrefix)]);
       const matches = posts
         .filter(
           (p) =>

@@ -12,7 +12,6 @@
   --text-soft: #d4d4d8;
   --muted: #a1a1aa;
   --muted-2: #71717a;
-  --overlay-strong: rgba(0, 0, 0, 0.8);
   --danger-border: #7f1d1d;
   --danger-text: #f87171;
 }
@@ -26,7 +25,6 @@
   --text-soft: #3f3f46;
   --muted: #52525b;
   --muted-2: #71717a;
-  --overlay-strong: rgba(255, 255, 255, 0.85);
   --danger-border: #fecaca;
   --danger-text: #b91c1c;
 }
@@ -378,11 +376,17 @@ nav a:hover {
   aspect-ratio: 2.4 / 1;
 }
 
+/* Fotoğraf kartlarında zemin bir görsel olduğu için tema değişkenleri güvenilir
+   kontrast vermiyor: üstteki meta yazısı açık gökyüzü gibi parlak alanlara denk
+   gelip okunmaz hale geliyordu. Bu yüzden hem üstten hem alttan koyu bir perde
+   uygulanıyor ve metin her iki temada da açık renkte tutuluyor. */
 .kart-foto::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--overlay-strong), rgba(0, 0, 0, 0) 65%);
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 32%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 30%, rgba(0, 0, 0, 0) 62%);
 }
 
 .kart-foto .kart-ust,
@@ -391,6 +395,24 @@ nav a:hover {
 .kart-foto .kart-tarih {
   position: relative;
   z-index: 1;
+}
+
+.kart-foto .kart-ust,
+.kart-foto .kart-baslik {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.kart-foto .kart-tarih,
+.kart-foto .kart-foto-caption {
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.kart-foto .rozet {
+  background-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  text-shadow: none;
 }
 
 .kart-foto-caption {
@@ -452,6 +474,14 @@ nav a:hover {
 }
 
 @media (max-width: 640px) {
+  /* 26px mobilde neredeyse tüm ilk ekranı kaplayıp kartları kıvrımın
+     altına itiyordu; özet güçlü kalsın ama içeriği ezmesin. */
+  .ozet {
+    font-size: 20px;
+    line-height: 1.55;
+    margin-bottom: 32px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }

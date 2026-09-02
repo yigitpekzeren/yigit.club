@@ -1,6 +1,7 @@
 const REPO = "yigitpekzeren/yigit.club";
 const BRANCH = "main";
 const POSTS_FOLDER = "notlar-data";
+const INDEX_FILENAME = "index.json";
 const DRAFTS_FOLDER = "taslaklar-data";
 const IMAGES_FOLDER = "images";
 const KATEGORILER_DOSYASI = "kategoriler.json";
@@ -207,7 +208,7 @@ function kategoriPageTemplate(slug, label) {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="yigit.club">
     <title>${safeLabel} | yigit.club</title>
-    <link rel="stylesheet" href="../css/style.css?v=6">
+    <link rel="stylesheet" href="../css/style.css?v=7">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
   </head>
   <body>
@@ -237,7 +238,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=10"></script>
+    <script src="../js/site.js?v=11"></script>
     <script>
       initTheme();
       initLogoTyping();
@@ -487,8 +488,91 @@ function updatePhotoBlockVisibility() {
   document.getElementById("photo-block").style.display = category === "fotograf" ? "" : "none";
 }
 
+/* ---------- rich text temizleme ----------
+   Başka bir yerden (Word, web sayfası, Notion) yapıştırılan metin beraberinde
+   <span style>, <font>, class ve iç içe boş <p> yığını getiriyor; bu çöp
+   JSON'a kaydolup sitenin tipografisini bozuyor. Hem yapıştırma anında hem de
+   kayıt anında yalnızca izin verilen etiketler bırakılıyor. */
+
+const IZINLI_ETIKETLER = new Set(["P", "BR", "STRONG", "EM", "U", "H2", "UL", "OL", "LI", "A", "BLOCKQUOTE", "CODE"]);
+const ETIKET_ESLESMELERI = { B: "STRONG", I: "EM", H1: "H2", H3: "H2", H4: "H2", H5: "H2", H6: "H2" };
+const BLOK_ETIKETLER = new Set(["P", "DIV", "H1", "H2", "H3", "H4", "H5", "H6", "UL", "OL", "LI", "BLOCKQUOTE", "TABLE", "SECTION", "ARTICLE"]);
+
+function guvenliHref(value) {
+  return /^(https?:\/\/|mailto:|\/|#)/i.test((value || "").trim()) ? value.trim() : null;
+}
+
+function sanitizeEditorHtml(html) {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html || "";
+  tpl.content
+    .querySelectorAll("script,style,meta,link,title,noscript,iframe,object,embed,svg")
+    .forEach((n) => n.remove());
+
+  const temizle = (parent) => {
+    [...parent.childNodes].forEach((node) => {
+      if (node.nodeType === Node.COMMENT_NODE) {
+        node.remove();
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return; // metin düğümleri korunur
+
+      temizle(node); // önce çocuklar normalleştirilsin
+
+      let tag = node.tagName;
+
+      // DIV: satır kutusuysa paragrafa çevir, kapsayıcıysa etiketi kaldır
+      if (tag === "DIV") {
+        const blokIceriyor = [...node.children].some((c) => BLOK_ETIKETLER.has(c.tagName));
+        if (blokIceriyor) {
+          node.replaceWith(...node.childNodes);
+          return;
+        }
+        const p = document.createElement("p");
+        p.append(...node.childNodes);
+        node.replaceWith(p);
+        node = p;
+        tag = "P";
+      }
+
+      const esdeger = ETIKET_ESLESMELERI[tag];
+      if (esdeger) {
+        const yeni = document.createElement(esdeger.toLowerCase());
+        yeni.append(...node.childNodes);
+        node.replaceWith(yeni);
+        node = yeni;
+        tag = esdeger;
+      }
+
+      if (!IZINLI_ETIKETLER.has(tag)) {
+        node.replaceWith(...node.childNodes); // etiketi at, metni koru
+        return;
+      }
+
+      [...node.attributes].forEach((attr) => {
+        const isHref = tag === "A" && attr.name.toLowerCase() === "href";
+        if (isHref && guvenliHref(attr.value)) return;
+        node.removeAttribute(attr.name);
+      });
+
+      if (tag === "A" && node.getAttribute("href")) {
+        node.setAttribute("rel", "noopener noreferrer");
+        node.setAttribute("target", "_blank");
+      }
+    });
+  };
+
+  temizle(tpl.content);
+
+  return tpl.innerHTML
+    .replace(/&nbsp;/g, " ")
+    .replace(/<p>(?:\s|<br\s*\/?>)*<\/p>/gi, (m) => (/<br/i.test(m) ? m : "")) // tamamen boş paragrafları at
+    .replace(/\s+</g, (m) => (m.includes("\n") ? "<" : m))
+    .trim();
+}
+
 function getBodyHtml() {
-  return document.getElementById("f-body").innerHTML.trim();
+  return sanitizeEditorHtml(document.getElementById("f-body").innerHTML).trim();
 }
 
 function isBodyEmpty() {
@@ -1115,6 +1199,7 @@ async function handleDeletePost(slug, sha) {
       resetForm();
     }
     await loadPosts();
+    await rebuildIndexSafely();
     renderArchive();
     showToast("Yazı silindi.");
   } catch (e) {
@@ -1135,6 +1220,7 @@ async function handleDeleteEntry(slug, index) {
     const content = utf8ToBase64(JSON.stringify(updated, null, 2) + "\n");
     await ghPutFile(`${POSTS_FOLDER}/${slug}.json`, content, `Girdi sil: ${slug}`, p.sha);
     await loadPosts();
+    await rebuildIndexSafely();
     renderArchive();
     showToast("Girdi silindi.");
   } catch (e) {
@@ -1275,6 +1361,7 @@ async function onPostSubmit(e) {
 
     resetForm();
     await loadPosts();
+    await rebuildIndexSafely();
     renderArchive();
     await loadDrafts();
     renderDrafts();
@@ -1292,7 +1379,9 @@ async function onPostSubmit(e) {
 
 async function loadPosts() {
   try {
-    const files = (await ghListFolder(POSTS_FOLDER)).filter((f) => f.name.endsWith(".json"));
+    const files = (await ghListFolder(POSTS_FOLDER)).filter(
+      (f) => f.name.endsWith(".json") && f.name !== INDEX_FILENAME
+    );
     const posts = await Promise.all(
       files.map(async (f) => {
         const res = await fetch(`${f.download_url}?t=${Date.now()}`);
@@ -1304,6 +1393,62 @@ async function loadPosts() {
     state.posts = posts;
   } catch (e) {
     document.getElementById("archive-root").innerHTML = `<p style="color:#f87171;">Yazılar yüklenemedi: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+/* ---------- yazı dizini (manifest) ----------
+   Site, yazı listesini GitHub API'si yerine bu tek dosyadan okur.
+   Böylece ziyaretçi tarafında API limiti (60 istek/saat/IP) devreye girmez
+   ve sayfa tek istekle açılır. Yazı değiştiren her işlemden sonra yenilenir. */
+
+function plainTextFromEntry(entry) {
+  const raw = entry.body || "";
+  if (entry.bodyFormat === "html") {
+    const div = document.createElement("div");
+    // textContent blok sınırlarında boşluk bırakmadığı için önce ayırıcı ekle
+    div.innerHTML = raw
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<\/(p|div|h[1-6]|li|blockquote|ul|ol)>/gi, " ");
+    return (div.textContent || "").replace(/\s+/g, " ").trim();
+  }
+  return raw
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]*)\]\(([^)]*)\)/g, "$1")
+    .replace(/[*_`>#]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildIndexPayload() {
+  return state.posts
+    .map((p) => ({
+      slug: p.slug,
+      title: p.title || "",
+      date: p.date || "",
+      category: p.category || "genel",
+      subcategory: p.subcategory || "",
+      stage: p.stage || "",
+      image: p.image || "",
+      imageCaption: p.imageCaption || "",
+      excerpt: (p.entries || []).map(plainTextFromEntry).join(" ").trim().slice(0, 800),
+    }))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+async function rebuildIndex() {
+  const path = `${POSTS_FOLDER}/${INDEX_FILENAME}`;
+  const existing = await ghGetFile(path);
+  const content = utf8ToBase64(JSON.stringify(buildIndexPayload(), null, 2) + "\n");
+  await ghPutFile(path, content, "Yazı dizinini güncelle", existing?.sha);
+}
+
+/* Dizin yazılamazsa asıl işlem (yayın/silme) yine de tamamlanmış sayılır;
+   kullanıcıya yalnızca uyarı gösterilir. */
+async function rebuildIndexSafely() {
+  try {
+    await rebuildIndex();
+  } catch (e) {
+    showToast(`Yazı dizini güncellenemedi: ${e.message}`, true);
   }
 }
 
@@ -1347,6 +1492,17 @@ function wireDashboard() {
     btn.addEventListener("click", () => applyWysiwygFormat(btn.dataset.md));
   });
   document.execCommand("defaultParagraphSeparator", false, "p");
+
+  document.getElementById("f-body").addEventListener("paste", (e) => {
+    e.preventDefault();
+    const pano = e.clipboardData;
+    const html = pano.getData("text/html");
+    const duzMetin = pano.getData("text/plain");
+    const icerik = html
+      ? sanitizeEditorHtml(html)
+      : escapeHtml(duzMetin).replace(/\r?\n/g, "<br>");
+    document.execCommand("insertHTML", false, icerik);
+  });
   document.querySelectorAll("#ozet-toolbar button").forEach((btn) => {
     btn.addEventListener("click", () => applyMdFormat(document.getElementById("f-ozet"), btn.dataset.md));
   });
