@@ -2,15 +2,17 @@ const REPO = "yigitpekzeren/yigit.club";
 const BRANCH = "main";
 const POSTS_FOLDER = "notlar-data";
 const INDEX_FILENAME = "index.json";
+const SEARCH_FILENAME = "arama.json";
 const DRAFTS_FOLDER = "taslaklar-data";
 const IMAGES_FOLDER = "images";
 const KATEGORILER_DOSYASI = "kategoriler.json";
 const OZET_DOSYASI = "ozet.json";
+const HAKKINDA_DOSYASI = "hakkinda.json";
 const TOKEN_KEY = "yigitclub_admin_token";
 const CROP_W = 320;
 const CROP_H = 240;
 
-const state = { posts: [], drafts: [], categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null };
+const state = { posts: [], drafts: [], categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null, hakkindaSha: null };
 const uiState = { mode: "new-post", targetSlug: null, targetSha: null, targetPost: null, slugTouched: false, editingEntryIndex: null, draftSlug: null, draftSha: null };
 const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, naturalW: 0, naturalH: 0, dragging: false, lastX: 0, lastY: 0 };
 
@@ -155,26 +157,29 @@ async function saveCategories(list) {
 
 /* ---------- ana sayfa özeti ---------- */
 
+/* Özet de yazı içeriği gibi zengin metin. Eski kayıtlar markdown olduğu için
+   format alanı yoksa markdown varsayılıp HTML'e çevrilir. */
 async function loadOzet() {
   const data = await ghGetFile(OZET_DOSYASI);
   if (data) {
     state.ozetSha = data.sha;
-    return JSON.parse(base64ToUtf8(data.content)).text || "";
+    const kayit = JSON.parse(base64ToUtf8(data.content));
+    return { text: kayit.text || "", format: kayit.format || "markdown" };
   }
   state.ozetSha = null;
-  return "";
+  return { text: "", format: "html" };
 }
 
 async function handleSaveOzet() {
-  const textarea = document.getElementById("f-ozet");
+  const editor = document.getElementById("f-ozet");
   const statusEl = document.getElementById("ozet-status");
   const btn = document.getElementById("ozet-save-btn");
-  const text = textarea.value.trim();
+  const text = sanitizeEditorHtml(editor.innerHTML).trim();
 
   btn.disabled = true;
   statusEl.textContent = "Kaydediliyor...";
   try {
-    const content = utf8ToBase64(JSON.stringify({ text }, null, 2) + "\n");
+    const content = utf8ToBase64(JSON.stringify({ text, format: "html" }, null, 2) + "\n");
     const res = await ghPutFile(OZET_DOSYASI, content, "Ana sayfa özetini güncelle", state.ozetSha);
     state.ozetSha = res.content.sha;
     statusEl.textContent = "Kaydedildi.";
@@ -182,6 +187,41 @@ async function handleSaveOzet() {
   } catch (e) {
     statusEl.textContent = `Kaydedilemedi: ${e.message}`;
     showToast(`Özet kaydedilemedi: ${e.message}`, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ---------- hakkında sayfası ---------- */
+
+async function loadHakkinda() {
+  const data = await ghGetFile(HAKKINDA_DOSYASI);
+  if (data) {
+    state.hakkindaSha = data.sha;
+    const kayit = JSON.parse(base64ToUtf8(data.content));
+    return { text: kayit.text || "", format: kayit.format || "markdown" };
+  }
+  state.hakkindaSha = null;
+  return { text: "", format: "html" };
+}
+
+async function handleSaveHakkinda() {
+  const editor = document.getElementById("f-hakkinda");
+  const statusEl = document.getElementById("hakkinda-status");
+  const btn = document.getElementById("hakkinda-save-btn");
+  const text = sanitizeEditorHtml(editor.innerHTML).trim();
+
+  btn.disabled = true;
+  statusEl.textContent = "Kaydediliyor...";
+  try {
+    const content = utf8ToBase64(JSON.stringify({ text, format: "html" }, null, 2) + "\n");
+    const res = await ghPutFile(HAKKINDA_DOSYASI, content, "Hakkında sayfasını güncelle", state.hakkindaSha);
+    state.hakkindaSha = res.content.sha;
+    statusEl.textContent = "Kaydedildi.";
+    showToast("Hakkında sayfası güncellendi.");
+  } catch (e) {
+    statusEl.textContent = `Kaydedilemedi: ${e.message}`;
+    showToast(`Hakkında kaydedilemedi: ${e.message}`, true);
   } finally {
     btn.disabled = false;
   }
@@ -218,7 +258,8 @@ function kategoriPageTemplate(slug, label) {
     <meta property="og:url" content="https://yigit.club/kategori/${slug}.html">
     <meta property="og:image" content="https://yigit.club/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="stylesheet" href="../css/style.css?v=10">
+    <link rel="alternate" type="application/rss+xml" title="yigit.club" href="/feed.xml">
+    <link rel="stylesheet" href="../css/style.css?v=12">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
   </head>
   <body>
@@ -248,7 +289,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=13"></script>
+    <script src="../js/site.js?v=15"></script>
     <script>
       initTheme();
       initLogoTyping();
@@ -345,30 +386,6 @@ async function handleDeleteCategory() {
   }
 }
 
-/* ---------- markdown toolbar ---------- */
-
-function applyMdFormat(textarea, type) {
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const value = textarea.value;
-  const selected = value.slice(start, end);
-  let before = "";
-  let after = "";
-  let placeholder = "metin";
-
-  if (type === "bold") { before = "**"; after = "**"; }
-  else if (type === "italic") { before = "_"; after = "_"; }
-  else if (type === "h2") { before = "\n## "; placeholder = "Başlık"; }
-  else if (type === "link") { before = "["; after = "](https://)"; placeholder = "bağlantı metni"; }
-  else if (type === "list") { before = "\n- "; placeholder = "madde"; }
-
-  const text = selected || placeholder;
-  textarea.value = value.slice(0, start) + before + text + after + value.slice(end);
-  const cursorStart = start + before.length;
-  const cursorEnd = cursorStart + text.length;
-  textarea.focus();
-  textarea.setSelectionRange(cursorStart, cursorEnd);
-}
 
 /* ---------- fotoğraf kırpma ---------- */
 
@@ -598,8 +615,8 @@ function setBodyHtml(content, format) {
   editor.innerHTML = format === "html" ? content : marked.parse(content);
 }
 
-function applyWysiwygFormat(type) {
-  const editor = document.getElementById("f-body");
+function applyWysiwygFormat(type, editorId = "f-body") {
+  const editor = document.getElementById(editorId);
   editor.focus();
   if (type === "bold") {
     document.execCommand("bold");
@@ -735,7 +752,7 @@ function dashboardHTML() {
 
           <div id="f-body-row">
             <label style="margin-top:0;">İçerik</label>
-            <div class="md-toolbar">
+            <div class="md-toolbar" id="body-toolbar">
               <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
               <button type="button" data-md="italic" title="İtalik"><em>i</em></button>
               <button type="button" data-md="h2" title="Başlık">H2</button>
@@ -759,7 +776,7 @@ function dashboardHTML() {
 
           <details class="admin-ozet-section">
             <summary><h2>Ana Sayfa Özeti</h2></summary>
-            <p class="hint" style="margin-bottom:8px;">Ana sayfanın üstünde büyük yazıyla gösterilir. Markdown destekler (**kalın** gibi).</p>
+            <p class="hint" style="margin-bottom:8px;">Ana sayfanın üstünde büyük yazıyla gösterilir. Biçimlendirmek için yazıyı seçip yukarıdaki düğmeleri kullan.</p>
             <div class="md-toolbar" id="ozet-toolbar">
               <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
               <button type="button" data-md="italic" title="İtalik"><em>i</em></button>
@@ -767,10 +784,27 @@ function dashboardHTML() {
               <button type="button" data-md="link" title="Bağlantı">🔗</button>
               <button type="button" data-md="list" title="Liste">•</button>
             </div>
-            <textarea id="f-ozet" rows="3"></textarea>
+            <div id="f-ozet" class="body-wysiwyg ozet-wysiwyg" contenteditable="true" data-placeholder="Ana sayfada görünecek kısa tanıtım..."></div>
             <div class="admin-form-actions">
               <button type="button" id="ozet-save-btn">Özeti Kaydet</button>
               <span id="ozet-status" class="admin-post-meta"></span>
+            </div>
+          </details>
+
+          <details class="admin-ozet-section">
+            <summary><h2>Hakkında Sayfası</h2></summary>
+            <p class="hint" style="margin-bottom:8px;">Hakkında sayfasının giriş bölümü. Alttaki "Kahve aşamaları" açıklaması sabittir.</p>
+            <div class="md-toolbar" id="hakkinda-toolbar">
+              <button type="button" data-md="bold" title="Kalın"><strong>B</strong></button>
+              <button type="button" data-md="italic" title="İtalik"><em>i</em></button>
+              <button type="button" data-md="h2" title="Başlık">H2</button>
+              <button type="button" data-md="link" title="Bağlantı">🔗</button>
+              <button type="button" data-md="list" title="Liste">•</button>
+            </div>
+            <div id="f-hakkinda" class="body-wysiwyg ozet-wysiwyg" contenteditable="true" data-placeholder="Hakkında sayfasında görünecek metin..."></div>
+            <div class="admin-form-actions">
+              <button type="button" id="hakkinda-save-btn">Hakkında'yı Kaydet</button>
+              <span id="hakkinda-status" class="admin-post-meta"></span>
             </div>
           </details>
         </section>
@@ -1393,7 +1427,7 @@ async function onPostSubmit(e) {
 async function loadPosts() {
   try {
     const files = (await ghListFolder(POSTS_FOLDER)).filter(
-      (f) => f.name.endsWith(".json") && f.name !== INDEX_FILENAME
+      (f) => f.name.endsWith(".json") && f.name !== INDEX_FILENAME && f.name !== SEARCH_FILENAME
     );
     const posts = await Promise.all(
       files.map(async (f) => {
@@ -1547,6 +1581,9 @@ function plainTextFromEntry(entry) {
     .trim();
 }
 
+/* Kart dizini yalın tutulur: her sayfa yüklemesinde indiği için yazı metinlerini
+   buraya koymak dosyayı zamanla şişirirdi. Arama metni ayrı dosyada ve yalnızca
+   kullanıcı arama kutusuna yazdığında indiriliyor. */
 function buildIndexPayload() {
   return state.posts
     .map((p) => ({
@@ -1558,25 +1595,115 @@ function buildIndexPayload() {
       stage: p.stage || "",
       image: p.image || "",
       imageCaption: p.imageCaption || "",
-      excerpt: (p.entries || []).map(plainTextFromEntry).join(" ").trim().slice(0, 800),
     }))
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
-async function rebuildIndex() {
-  const path = `${POSTS_FOLDER}/${INDEX_FILENAME}`;
-  const existing = await ghGetFile(path);
-  const content = utf8ToBase64(JSON.stringify(buildIndexPayload(), null, 2) + "\n");
-  await ghPutFile(path, content, "Yazı dizinini güncelle", existing?.sha);
+function buildSearchPayload() {
+  return state.posts
+    .map((p) => ({
+      slug: p.slug,
+      text: (p.entries || []).map(plainTextFromEntry).join(" ").trim(),
+    }))
+    .filter((p) => p.text);
 }
 
-/* Dizin yazılamazsa asıl işlem (yayın/silme) yine de tamamlanmış sayılır;
+const SITE_URL = "https://yigit.club";
+const SITE_ACIKLAMA = "Yiğit'in dijital kafesi: kültürel miras üzerine düşünceler, koşu ve atölye projeleri.";
+
+function xmlKacis(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function buildFeedXml(index, metinler = {}) {
+  const items = index
+    .slice(0, 30)
+    .map((p) => {
+      const url = `${SITE_URL}/post.html?slug=${encodeURIComponent(p.slug)}`;
+      const tarih = p.date ? new Date(p.date).toUTCString() : new Date().toUTCString();
+      const ozet = p.imageCaption || (metinler[p.slug] || "").slice(0, 300);
+      return `    <item>
+      <title>${xmlKacis(p.title)}</title>
+      <link>${xmlKacis(url)}</link>
+      <guid isPermaLink="true">${xmlKacis(url)}</guid>
+      <pubDate>${tarih}</pubDate>
+      <category>${xmlKacis(p.category)}</category>
+      <description>${xmlKacis(ozet)}</description>
+    </item>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>yigit.club</title>
+    <link>${SITE_URL}/</link>
+    <description>${xmlKacis(SITE_ACIKLAMA)}</description>
+    <language>tr</language>
+    <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml"/>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+${items}
+  </channel>
+</rss>
+`;
+}
+
+function buildSitemapXml(index) {
+  const guncel = (d) => (d ? new Date(d).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
+  const enYeni = index.length ? guncel(index[0].date) : guncel(null);
+
+  const girdiler = [
+    { loc: `${SITE_URL}/`, lastmod: enYeni },
+    { loc: `${SITE_URL}/hakkinda.html`, lastmod: enYeni },
+    ...state.categories.map((c) => ({
+      loc: `${SITE_URL}/kategori/${encodeURIComponent(c.slug)}.html`,
+      lastmod: enYeni,
+    })),
+    ...index.map((p) => ({
+      loc: `${SITE_URL}/post.html?slug=${encodeURIComponent(p.slug)}`,
+      lastmod: guncel(p.date),
+    })),
+  ];
+
+  const urls = girdiler
+    .map((u) => `  <url>\n    <loc>${xmlKacis(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n  </url>`)
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`;
+}
+
+async function ghYaz(path, metin, mesaj) {
+  const existing = await ghGetFile(path);
+  await ghPutFile(path, utf8ToBase64(metin), mesaj, existing?.sha);
+}
+
+async function rebuildIndex() {
+  const index = buildIndexPayload();
+  const arama = buildSearchPayload();
+  const metinler = Object.fromEntries(arama.map((p) => [p.slug, p.text]));
+
+  await ghYaz(`${POSTS_FOLDER}/${INDEX_FILENAME}`, JSON.stringify(index, null, 2) + "\n", "Yazı dizinini güncelle");
+  await ghYaz(`${POSTS_FOLDER}/${SEARCH_FILENAME}`, JSON.stringify(arama, null, 2) + "\n", "Arama dizinini güncelle");
+  await ghYaz("feed.xml", buildFeedXml(index, metinler), "RSS beslemesini güncelle");
+  await ghYaz("sitemap.xml", buildSitemapXml(index), "Site haritasını güncelle");
+}
+
+/* Bu dosyalar yazılamazsa asıl işlem (yayın/silme) yine de tamamlanmış sayılır;
    kullanıcıya yalnızca uyarı gösterilir. */
 async function rebuildIndexSafely() {
   try {
     await rebuildIndex();
   } catch (e) {
-    showToast(`Yazı dizini güncellenemedi: ${e.message}`, true);
+    showToast(`Site dosyaları güncellenemedi: ${e.message}`, true);
   }
 }
 
@@ -1615,9 +1742,16 @@ function wireDashboard() {
   document.getElementById("confirm-add-category").addEventListener("click", handleAddCategory);
   document.getElementById("delete-category-btn").addEventListener("click", handleDeleteCategory);
 
-  document.querySelectorAll(".md-toolbar:not(#ozet-toolbar) button").forEach((btn) => {
-    btn.addEventListener("mousedown", (e) => e.preventDefault());
-    btn.addEventListener("click", () => applyWysiwygFormat(btn.dataset.md));
+  // Her araç çubuğu kendi düzenleyicisine bağlanır
+  [
+    ["#body-toolbar", "f-body"],
+    ["#ozet-toolbar", "f-ozet"],
+    ["#hakkinda-toolbar", "f-hakkinda"],
+  ].forEach(([toolbar, editorId]) => {
+    document.querySelectorAll(`${toolbar} button`).forEach((btn) => {
+      btn.addEventListener("mousedown", (e) => e.preventDefault());
+      btn.addEventListener("click", () => applyWysiwygFormat(btn.dataset.md, editorId));
+    });
   });
   document.execCommand("defaultParagraphSeparator", false, "p");
 
@@ -1629,19 +1763,21 @@ function wireDashboard() {
   document.getElementById("f-body").addEventListener("input", scheduleAutosave);
   document.getElementById("f-datetime").addEventListener("input", scheduleAutosave);
 
-  document.getElementById("f-body").addEventListener("paste", (e) => {
-    e.preventDefault();
-    const pano = e.clipboardData;
-    const html = pano.getData("text/html");
-    const duzMetin = pano.getData("text/plain");
-    const icerik = html
-      ? sanitizeEditorHtml(html)
-      : escapeHtml(duzMetin).replace(/\r?\n/g, "<br>");
-    document.execCommand("insertHTML", false, icerik);
+  // Yapıştırma temizliği tüm zengin metin alanları için geçerli
+  ["f-body", "f-ozet", "f-hakkinda"].forEach((id) => {
+    document.getElementById(id).addEventListener("paste", (e) => {
+      e.preventDefault();
+      const pano = e.clipboardData;
+      const html = pano.getData("text/html");
+      const duzMetin = pano.getData("text/plain");
+      const icerik = html
+        ? sanitizeEditorHtml(html)
+        : escapeHtml(duzMetin).replace(/\r?\n/g, "<br>");
+      document.execCommand("insertHTML", false, icerik);
+    });
   });
-  document.querySelectorAll("#ozet-toolbar button").forEach((btn) => {
-    btn.addEventListener("click", () => applyMdFormat(document.getElementById("f-ozet"), btn.dataset.md));
-  });
+
+  document.getElementById("hakkinda-save-btn").addEventListener("click", handleSaveHakkinda);
 
   wireCropper();
 
@@ -1685,7 +1821,12 @@ async function renderRoot() {
   wireDashboard();
 
   try {
-    document.getElementById("f-ozet").value = await loadOzet();
+    const ozet = await loadOzet();
+    document.getElementById("f-ozet").innerHTML =
+      ozet.format === "html" ? ozet.text : marked.parse(ozet.text || "");
+    const hakkinda = await loadHakkinda();
+    document.getElementById("f-hakkinda").innerHTML =
+      hakkinda.format === "html" ? hakkinda.text : marked.parse(hakkinda.text || "");
   } catch (e) {
     document.getElementById("ozet-status").textContent = "Özet yüklenemedi.";
   }

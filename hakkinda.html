@@ -27,7 +27,8 @@
     <meta property="og:url" content="https://yigit.club/hakkinda.html">
     <meta property="og:image" content="https://yigit.club/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="stylesheet" href="css/style.css?v=10">
+    <link rel="alternate" type="application/rss+xml" title="yigit.club" href="/feed.xml">
+    <link rel="stylesheet" href="css/style.css?v=12">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
   </head>
   <body>
@@ -51,17 +52,8 @@
       <h1 class="post-baslik">hakkında</h1>
 
       <div class="icerik">
-        <p>
-          Burası bir <strong>dijital kafe</strong> — ya da bir dijital bahçe.
-          Kültürel mirasla ilgili düşüncelerimi, koşuyu ve bazı atölye projelerimi
-          burada çekirdekten öğütüyor ve demliyorum.
-        </p>
-        <p>
-          Bu site bir portfolyo değil. Yoğun bir internet trafiği için de açılmadı.
-          Daha çok kendim için, kendi içeriklerimi kendime en iyi hitap edecek şekilde
-          topladığım bir alan. Buraya nasıl karar verdiğimi merak ediyorsan
-          <a href="post.html?slug=ilk-yazi">ilk yazıda</a> anlatmıştım.
-        </p>
+        <!-- Bu bölümün içeriği admin panelden düzenlenir (hakkinda.json) -->
+        <div id="hakkinda-icerik"></div>
 
         <h2>Kahve aşamaları</h2>
         <p>
@@ -97,13 +89,14 @@
       <p>yigit.club · <a href="hakkinda.html">hakkında</a></p>
     </footer>
 
-    <script src="js/site.js?v=13"></script>
+    <script src="js/site.js?v=15"></script>
     <script>
       initTheme();
       initLogoTyping();
       initMobileMenu();
       renderNav("", "kategori/");
       initSearch("");
+      renderHakkinda("");
     </script>
 
   </body>

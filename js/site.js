@@ -2,6 +2,7 @@ const CMS_REPO = "yigitpekzeren/yigit.club";
 const CMS_BRANCH = "main";
 const DATA_FOLDER = "notlar-data";
 const INDEX_FILE = "notlar-data/index.json";
+const SEARCH_FILE = "notlar-data/arama.json";
 const CATEGORIES_FILE = "kategoriler.json";
 const OZET_FILE = "ozet.json";
 const THEME_KEY = "yigitclub_theme";
@@ -31,36 +32,20 @@ function categoryLabel(slug, categories) {
   return found ? found.label : slug || "genel";
 }
 
+/* Kategori/alt kategori artık gerçek <a> etiketi. Önceden bunlar kartı saran
+   <a>'nın içinde role="link" taşıyan <span>'lerdi; iç içe tıklanabilir yapı
+   ekran okuyucular için sorunluydu ve tıklamayı yakalama fazında kesmek
+   gerekiyordu. Kart artık <article>, tamamını kaplayan ayrı bir bağlantı var. */
 function kategoriEtiketHTML(post, pathPrefix, categories) {
   const isRealCategory = (categories || []).some((c) => c.slug === post.category);
   const label = escapeHtml(categoryLabel(post.category, categories));
   const catHtml = isRealCategory
-    ? `<span class="kart-link" role="link" tabindex="0" data-href="${pathPrefix}kategori/${encodeURIComponent(post.category)}.html">${label}</span>`
+    ? `<a class="kart-link" href="${pathPrefix}kategori/${encodeURIComponent(post.category)}.html">${label}</a>`
     : label;
   if (!post.subcategory) return catHtml;
-  const subHtml = `<span class="kart-link" role="link" tabindex="0" data-href="${pathPrefix}alt-kategori.html?alt=${encodeURIComponent(post.subcategory)}">${escapeHtml(post.subcategory)}</span>`;
+  const subHtml = `<a class="kart-link" href="${pathPrefix}alt-kategori.html?alt=${encodeURIComponent(post.subcategory)}">${escapeHtml(post.subcategory)}</a>`;
   return `${catHtml} / ${subHtml}`;
 }
-
-document.addEventListener(
-  "click",
-  (e) => {
-    const link = e.target.closest(".kart-link");
-    if (!link) return;
-    e.preventDefault();
-    e.stopPropagation();
-    window.location.href = link.dataset.href;
-  },
-  true
-);
-
-document.addEventListener("keydown", (e) => {
-  if (e.key !== "Enter") return;
-  const link = e.target.closest && e.target.closest(".kart-link");
-  if (!link) return;
-  e.preventDefault();
-  window.location.href = link.dataset.href;
-});
 
 function formatDateTime(iso) {
   if (!iso) return "";
@@ -138,33 +123,24 @@ function kartHTML(post, pathPrefix, buyuk, categories) {
   const rozet = post.stage || "";
   const href = `${pathPrefix}post.html?slug=${encodeURIComponent(post.slug)}`;
 
-  if (post.category === "fotograf" && post.image) {
-    return `
-      <a href="${href}" class="kart kart-foto${buyuk ? " buyuk" : ""}" style="background-image:url('${pathPrefix}${escapeHtml(post.image)}')">
-        <div class="kart-ust">
-          <span class="kart-kategori">${etiketHtml}</span>
-          ${rozet ? `<span class="rozet">${escapeHtml(rozet)}</span>` : ""}
-        </div>
-        <div>
-          <div class="kart-baslik">${escapeHtml(post.title)}</div>
-          ${post.imageCaption ? `<div class="kart-foto-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
-          <div class="kart-tarih">${formatDateOnly(post.date)}</div>
-        </div>
-      </a>
-    `;
-  }
+  const foto = post.category === "fotograf" && Boolean(post.image);
+  const arkaPlan = foto
+    ? ` style="background-image:url('${pathPrefix}${encodeURI(post.image)}')"`
+    : "";
 
   return `
-    <a href="${href}" class="kart${buyuk ? " buyuk" : ""}">
+    <article class="kart${foto ? " kart-foto" : ""}${buyuk ? " buyuk" : ""}"${arkaPlan}>
       <div class="kart-ust">
         <span class="kart-kategori">${etiketHtml}</span>
         ${rozet ? `<span class="rozet">${escapeHtml(rozet)}</span>` : ""}
       </div>
-      <div>
+      <div class="kart-alt">
         <div class="kart-baslik">${escapeHtml(post.title)}</div>
+        ${foto && post.imageCaption ? `<div class="kart-foto-caption">${escapeHtml(post.imageCaption)}</div>` : ""}
         <div class="kart-tarih">${formatDateOnly(post.date)}</div>
       </div>
-    </a>
+      <a class="kart-ortu" href="${href}" aria-label="${escapeHtml(post.title)}"></a>
+    </article>
   `;
 }
 
@@ -303,7 +279,9 @@ async function renderPost(containerSelector) {
         ${metaHtml}
         <div class="post-foto-layout">
           <div class="post-foto-image">
-            <img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageCaption || post.title)}">
+            <img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.imageCaption || post.title)}"
+                 class="buyutulebilir" tabindex="0" role="button"
+                 aria-label="Fotoğrafı büyüt: ${escapeHtml(post.imageCaption || post.title)}">
             ${post.imageCaption ? `<p class="post-foto-caption">${escapeHtml(post.imageCaption)}</p>` : ""}
           </div>
           <div class="post-foto-text">${entriesHtml}</div>
@@ -318,6 +296,82 @@ async function renderPost(containerSelector) {
     container.innerHTML = '<p style="color:#a1a1aa;">Yazı yüklenemedi.</p>';
     console.error(e);
   }
+}
+
+/* ---------- hakkında sayfası ----------
+   İçerik admin panelden düzenlenebilsin diye ayrı bir dosyadan okunur;
+   sayfadaki "Kahve aşamaları" bölümü sabittir (sistemin kendi açıklaması). */
+async function renderHakkinda(fetchPrefix) {
+  const el = document.getElementById("hakkinda-icerik");
+  if (!el) return;
+  try {
+    const res = await fetch(`${fetchPrefix}hakkinda.json?t=${Date.now()}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    el.innerHTML =
+      data.format === "html"
+        ? data.text || ""
+        : window.marked
+        ? marked.parse(data.text || "")
+        : escapeHtml(data.text || "");
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/* ---------- fotoğraf büyütme ----------
+   Fotoğraf sayfada sütuna sıkışmış halde duruyordu; tıklayınca tam ekran açılır.
+   Kapatma: karanlık alana tıklama, kapat düğmesi veya Esc. */
+
+function initLightbox() {
+  let aktifTetikleyici = null;
+
+  const kapat = () => {
+    const kat = document.getElementById("lightbox");
+    if (!kat) return;
+    kat.remove();
+    document.body.style.overflow = "";
+    if (aktifTetikleyici) aktifTetikleyici.focus();
+  };
+
+  const ac = (img) => {
+    aktifTetikleyici = img;
+    const kat = document.createElement("div");
+    kat.id = "lightbox";
+    kat.className = "lightbox";
+    kat.setAttribute("role", "dialog");
+    kat.setAttribute("aria-modal", "true");
+    kat.setAttribute("aria-label", img.getAttribute("alt") || "Fotoğraf");
+    kat.innerHTML = `
+      <button type="button" class="lightbox-kapat" aria-label="Kapat">×</button>
+      <img src="${img.getAttribute("src")}" alt="${escapeHtml(img.getAttribute("alt") || "")}">
+    `;
+    document.body.appendChild(kat);
+    document.body.style.overflow = "hidden";
+    kat.querySelector(".lightbox-kapat").focus();
+
+    kat.addEventListener("click", (e) => {
+      if (e.target === kat || e.target.closest(".lightbox-kapat")) kapat();
+    });
+  };
+
+  document.addEventListener("click", (e) => {
+    const img = e.target.closest("img.buyutulebilir");
+    if (img) ac(img);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      kapat();
+      return;
+    }
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const img = e.target.closest && e.target.closest("img.buyutulebilir");
+    if (img) {
+      e.preventDefault();
+      ac(img);
+    }
+  });
 }
 
 /* ---------- tema ---------- */
@@ -393,6 +447,26 @@ function renderSearchResults(matches, box, pathPrefix, categories) {
   box.classList.add("open");
 }
 
+/* Yazı metinleri kart dizininden ayrı tutulur; yalnızca ilk aramada indirilir,
+   böylece normal sayfa yüklemesi hafif kalır. */
+let __aramaCache = null;
+
+async function fetchSearchIndex(fetchPrefix) {
+  if (__aramaCache) return __aramaCache;
+  try {
+    const res = await fetch(`${fetchPrefix}${SEARCH_FILE}?t=${Date.now()}`);
+    if (!res.ok) throw new Error("yok");
+    const liste = await res.json();
+    __aramaCache = {};
+    liste.forEach((p) => {
+      __aramaCache[p.slug] = (p.text || "").toLowerCase();
+    });
+  } catch (e) {
+    __aramaCache = {}; // arama dosyası yoksa yalnızca başlık/kategori aranır
+  }
+  return __aramaCache;
+}
+
 function initSearch(pathPrefix) {
   const input = document.getElementById("site-search");
   const box = document.getElementById("search-results");
@@ -407,12 +481,15 @@ function initSearch(pathPrefix) {
     }
     try {
       const [posts, categories] = await Promise.all([fetchAllNotlar(pathPrefix), fetchCategories(pathPrefix)]);
+      const metinler = await fetchSearchIndex(pathPrefix);
       const matches = posts
         .filter(
           (p) =>
             (p.title || "").toLowerCase().includes(q) ||
             (p.category || "").toLowerCase().includes(q) ||
-            (p.subcategory || "").toLowerCase().includes(q)
+            (p.subcategory || "").toLowerCase().includes(q) ||
+            (p.imageCaption || "").toLowerCase().includes(q) ||
+            (metinler[p.slug] || "").includes(q)
         )
         .slice(0, 8);
       renderSearchResults(matches, box, pathPrefix, categories);
@@ -463,7 +540,13 @@ async function renderOzet(fetchPrefix) {
     const res = await fetch(`${fetchPrefix}${OZET_FILE}?t=${Date.now()}`);
     if (!res.ok) return;
     const data = await res.json();
-    el.innerHTML = window.marked ? marked.parse(data.text || "") : escapeHtml(data.text || "");
+    // Yeni kayıtlar HTML; format alanı olmayan eski kayıtlar markdown.
+    el.innerHTML =
+      data.format === "html"
+        ? data.text || ""
+        : window.marked
+        ? marked.parse(data.text || "")
+        : escapeHtml(data.text || "");
   } catch (e) {
     console.error(e);
   }

@@ -517,6 +517,12 @@
   overflow-y: auto;
 }
 
+/* Özet kısa bir tanıtım; yazı gövdesi kadar uzun bir kutuya gerek yok. */
+.ozet-wysiwyg {
+  min-height: 120px;
+  font-size: 14px;
+}
+
 .body-wysiwyg:focus {
   outline: none;
   border-color: var(--border-strong);

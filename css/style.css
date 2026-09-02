@@ -38,6 +38,15 @@ body {
   padding: 0 20px 60px;
 }
 
+/* Klavyeyle gezerken nerede olunduğu koyu zeminde de net görünsün */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--border-strong);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 header {
   display: flex;
   justify-content: space-between;
@@ -262,6 +271,7 @@ nav a:hover {
 }
 
 .kart {
+  position: relative;
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -271,14 +281,49 @@ nav a:hover {
   flex-direction: column;
   justify-content: space-between;
   color: var(--text);
-  text-decoration: none;
   transition: transform 0.2s ease, border-color 0.2s ease;
-  cursor: pointer;
 }
 
 .kart:hover {
   transform: translateY(-4px);
   border-color: var(--border-strong);
+}
+
+/* Kartın tamamını kaplayan asıl bağlantı. Metin katmanları tıklamayı
+   engellemesin diye pointer-events kapalı; yalnızca kategori bağlantıları açık. */
+.kart-ortu {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.kart-ust,
+.kart-alt {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.kart-ust a {
+  pointer-events: auto;
+}
+
+.kart:focus-within {
+  border-color: var(--border-strong);
+}
+
+.kart-ortu:focus-visible {
+  outline: 2px solid var(--border-strong);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kart,
+  .kart:hover {
+    transform: none;
+    transition: border-color 0.2s ease;
+  }
 }
 
 .buyuk {
@@ -309,6 +354,7 @@ nav a:hover {
 .kart-link {
   cursor: pointer;
   text-decoration: none;
+  color: inherit;
 }
 
 .kart-link:hover {
@@ -395,14 +441,6 @@ nav a:hover {
 }
 
 .kart-foto .kart-ust,
-.kart-foto .kart-baslik,
-.kart-foto-caption,
-.kart-foto .kart-tarih {
-  position: relative;
-  z-index: 1;
-}
-
-.kart-foto .kart-ust,
 .kart-foto .kart-baslik {
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
@@ -459,6 +497,49 @@ nav a:hover {
   width: 100%;
   border-radius: 12px;
   display: block;
+}
+
+img.buyutulebilir {
+  cursor: zoom-in;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+}
+
+.lightbox-kapat {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lightbox-kapat:hover {
+  border-color: rgba(255, 255, 255, 0.7);
 }
 
 .post-foto-caption {

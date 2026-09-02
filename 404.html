@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <script>
+      try {
+        if (localStorage.getItem("yigitclub_theme") === "light") {
+          document.documentElement.dataset.theme = "light";
+        }
+      } catch (e) {}
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Sayfa bulunamadı | yigit.club</title>
+    <link rel="stylesheet" href="/css/style.css?v=12">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
+  </head>
+  <body>
+
+    <header>
+      <a href="/index.html" class="logo" id="site-logo" aria-label="yigit.club">
+        <span class="logo-bold"></span><span class="logo-italic"></span><span class="logo-cursor"></span>
+      </a>
+      <button id="menu-toggle" class="menu-toggle" aria-label="Menü">☰</button>
+      <div class="header-right" id="header-right">
+        <nav id="site-nav"></nav>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Tema değiştir"></button>
+      </div>
+    </header>
+
+    <article class="sayfa">
+      <h1 class="post-baslik">burada bir şey yok</h1>
+      <div class="icerik">
+        <p>
+          Aradığın sayfa taşınmış ya da hiç var olmamış olabilir.
+          Bardağı tazeleyip baştan başlayalım.
+        </p>
+        <p>
+          <a href="/index.html">Ana sayfaya dön</a> · <a href="/hakkinda.html">burası neresi?</a>
+        </p>
+      </div>
+    </article>
+
+    <footer>
+      <p>yigit.club · <a href="/hakkinda.html">hakkında</a></p>
+    </footer>
+
+    <script src="/js/site.js?v=15"></script>
+    <script>
+      initTheme();
+      initLogoTyping();
+      initMobileMenu();
+      renderNav("/", "/kategori/");
+    </script>
+
+  </body>
+</html>
