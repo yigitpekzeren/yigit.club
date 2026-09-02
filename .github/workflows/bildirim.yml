@@ -1,0 +1,56 @@
+name: Bildirim
+
+# Iki yolla calisir:
+#  - workflow_dispatch: Actions sekmesinden elle "Run workflow"
+#  - schedule: her gun 18:00 UTC = 21:00 Turkiye saati
+on:
+  workflow_dispatch:
+    inputs:
+      baslik:
+        description: "Bildirim basligi (bos birakilirsa varsayilan kullanilir)"
+        required: false
+        default: ""
+      metin:
+        description: "Bildirim metni (bos birakilirsa varsayilan kullanilir)"
+        required: false
+        default: ""
+  schedule:
+    - cron: "0 18 * * *"
+
+# Bu is depoya yazmiyor, sadece okuyor.
+permissions:
+  contents: read
+
+# Ust uste tetiklenirse siraya soksun, ayni anda iki bildirim gitmesin.
+concurrency:
+  group: bildirim
+  cancel-in-progress: false
+
+jobs:
+  gonder:
+    name: Push bildirimi gonder
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: pywebpush yukle
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pywebpush
+
+      - name: Bildirimi gonder
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
+          PUSH_TITLE: ${{ inputs.baslik }}
+          PUSH_BODY: ${{ inputs.metin }}
+        run: python send_push.py

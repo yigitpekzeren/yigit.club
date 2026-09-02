@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Push Testi</title>
+<link rel="manifest" href="/test/manifest.json">
+<link rel="apple-touch-icon" href="/test/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Push Testi">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#09090b">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 18px calc(40px + env(safe-area-inset-bottom));
+    background: #09090b;
+    color: #f4f4f5;
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 620px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.01em; }
+  .sub { color: #a1a1aa; font-size: 14px; margin: 0 0 24px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #a1a1aa; margin: 28px 0 10px; font-weight: 600; }
+  .checks { border: 1px solid #27272a; border-radius: 12px; overflow: hidden; }
+  .row { display: flex; align-items: baseline; gap: 10px; padding: 11px 14px; border-bottom: 1px solid #27272a; font-size: 14px; }
+  .row:last-child { border-bottom: 0; }
+  .row .k { color: #a1a1aa; flex: 0 0 auto; min-width: 170px; }
+  .row .v { font-weight: 600; word-break: break-word; }
+  .v.ok { color: #4ade80; }
+  .v.bad { color: #f87171; }
+  .v.warn { color: #fbbf24; }
+  .v.idle { color: #71717a; font-weight: 400; }
+  button {
+    display: block; width: 100%; margin: 10px 0 0;
+    padding: 14px 16px; border-radius: 12px; border: 1px solid #3f3f46;
+    background: #18181b; color: #f4f4f5;
+    font: 600 16px/1.2 inherit; cursor: pointer;
+    -webkit-appearance: none; touch-action: manipulation;
+  }
+  button.primary { background: #f4f4f5; color: #09090b; border-color: #f4f4f5; }
+  button:disabled { opacity: .45; cursor: default; }
+  button:active { opacity: .7; }
+  textarea {
+    width: 100%; min-height: 190px; margin-top: 10px;
+    padding: 12px; border-radius: 12px; border: 1px solid #27272a;
+    background: #111113; color: #d4d4d8;
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    -webkit-appearance: none; resize: vertical;
+  }
+  #log {
+    margin-top: 10px; padding: 12px; border-radius: 12px;
+    border: 1px solid #27272a; background: #111113; color: #a1a1aa;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap; word-break: break-word; min-height: 40px;
+  }
+  .note { font-size: 13px; color: #a1a1aa; background: #111113; border: 1px solid #27272a; border-left: 3px solid #52525b; border-radius: 8px; padding: 12px 14px; margin-top: 14px; }
+  .note b { color: #d4d4d8; }
+  ol { padding-left: 20px; margin: 8px 0 0; }
+  li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Push Testi</h1>
+  <p class="sub">Uygulama tamamen kapalıyken sunucudan gelen bildirim kilit ekranına düşüyor mu?</p>
+
+  <h2>Kontroller</h2>
+  <div class="checks">
+    <div class="row"><span class="k">Bağlantı</span><span class="v idle" id="c-https">—</span></div>
+    <div class="row"><span class="k">Ana ekran (standalone)</span><span class="v idle" id="c-standalone">—</span></div>
+    <div class="row"><span class="k">Service Worker</span><span class="v idle" id="c-sw">—</span></div>
+    <div class="row"><span class="k">Push API</span><span class="v idle" id="c-push">—</span></div>
+    <div class="row"><span class="k">Bildirim izni</span><span class="v idle" id="c-perm">—</span></div>
+    <div class="row"><span class="k">Abonelik</span><span class="v idle" id="c-sub">—</span></div>
+  </div>
+
+  <div class="note" id="ios-note" hidden>
+    <b>iOS'ta önce ana ekrana eklemelisin.</b> Safari sekmesinde push çalışmaz.
+    <ol>
+      <li>Safari'de paylaş (kare + yukarı ok) simgesine dokun.</li>
+      <li><b>Ana Ekrana Ekle</b> seçeneğini seç.</li>
+      <li>Bu sayfayı ana ekrandaki <b>Push Testi</b> simgesinden aç.</li>
+      <li>Sonra aşağıdaki abone ol düğmesine bas.</li>
+    </ol>
+  </div>
+
+  <h2>Adımlar</h2>
+  <button class="primary" id="btn-sub">1 &middot; İzin ver ve abone ol</button>
+  <button id="btn-copy" disabled>2 &middot; Subscription JSON'unu kopyala</button>
+  <button id="btn-local" disabled>Yerel test bildirimi (sunucusuz)</button>
+  <button id="btn-unsub" disabled>Abonelikten çık / sıfırla</button>
+
+  <h2>Subscription JSON</h2>
+  <textarea id="json" readonly spellcheck="false" placeholder="Henüz abonelik yok. Yukarıdaki 1. düğmeye bas."></textarea>
+
+  <h2>Kayıt</h2>
+  <div id="log">Hazır.</div>
+
+</div>
+
+<script>
+// Bu, herkese açık (public) VAPID anahtarıdır; istemciye gömülmesi normaldir.
+var VAPID_PUBLIC_KEY = "BD4gjk6qhz6AmaqiUlPAb83CBJj0r5IPs_ABAWXA9ARGLVV5eVGavh1vLSCo52lj_6IossNgvLMD_ZH2bQqQfII";
+
+var swReg = null;
+var currentSub = null;
+
+function $(id) { return document.getElementById(id); }
+
+function log(msg) {
+  var t = new Date().toLocaleTimeString("tr-TR");
+  $("log").textContent = "[" + t + "] " + msg + "\n" + $("log").textContent;
+}
+
+function setRow(id, text, cls) {
+  var el = $(id);
+  el.textContent = text;
+  el.className = "v " + (cls || "idle");
+}
+
+function isStandalone() {
+  return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+         navigator.standalone === true;
+}
+
+function urlBase64ToUint8Array(base64String) {
+  var padding = new Array((4 - (base64String.length % 4)) % 4 + 1).join("=");
+  var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  var raw = window.atob(base64);
+  var out = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) { out[i] = raw.charCodeAt(i); }
+  return out;
+}
+
+function refresh() {
+  var secure = window.isSecureContext;
+  setRow("c-https", secure ? "güvenli (https)" : "güvensiz — push çalışmaz", secure ? "ok" : "bad");
+
+  var standalone = isStandalone();
+  setRow("c-standalone", standalone ? "evet" : "hayır — tarayıcı sekmesi", standalone ? "ok" : "warn");
+
+  var hasSW = "serviceWorker" in navigator;
+  var hasPush = "PushManager" in window;
+  setRow("c-sw",
+    !hasSW ? "desteklenmiyor" : (swReg ? "kayıtlı (" + swReg.scope + ")" : "kaydediliyor…"),
+    !hasSW ? "bad" : (swReg ? "ok" : "warn"));
+  setRow("c-push", hasPush ? "destekleniyor" : "desteklenmiyor", hasPush ? "ok" : "bad");
+
+  var perm = ("Notification" in window) ? Notification.permission : "yok";
+  setRow("c-perm", perm, perm === "granted" ? "ok" : (perm === "denied" ? "bad" : "warn"));
+
+  setRow("c-sub", currentSub ? "var" : "yok", currentSub ? "ok" : "warn");
+
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+              (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  $("ios-note").hidden = !(isIOS && !standalone);
+
+  $("btn-copy").disabled = !currentSub;
+  $("btn-unsub").disabled = !currentSub;
+  $("btn-local").disabled = !(swReg && perm === "granted");
+}
+
+function showSub(sub) {
+  currentSub = sub;
+  $("json").value = sub ? JSON.stringify(sub.toJSON(), null, 2) : "";
+  refresh();
+}
+
+// --- Service worker kaydı ---
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/test/sw.js", { scope: "/test/" })
+    .then(function (reg) {
+      swReg = reg;
+      log("Service worker kaydedildi.");
+      return reg.pushManager.getSubscription();
+    })
+    .then(function (sub) {
+      if (sub) { log("Mevcut abonelik bulundu."); showSub(sub); }
+      else { refresh(); }
+    })
+    .catch(function (err) {
+      log("Service worker kaydı başarısız: " + err.message);
+      refresh();
+    });
+} else {
+  refresh();
+}
+
+// --- 1. İzin ver ve abone ol ---
+$("btn-sub").addEventListener("click", function () {
+  if (!("Notification" in window) || !("PushManager" in window)) {
+    log("Bu tarayıcı push desteklemiyor. iOS'ta sayfayı ana ekrandan açtığından emin ol.");
+    return;
+  }
+  if (!swReg) {
+    log("Service worker henüz hazır değil, birkaç saniye sonra tekrar dene.");
+    return;
+  }
+
+  var btn = $("btn-sub");
+  btn.disabled = true;
+  log("Bildirim izni isteniyor…");
+
+  // iOS: izin isteği mutlaka bir dokunma olayından gelmeli.
+  Notification.requestPermission().then(function (perm) {
+    refresh();
+    if (perm !== "granted") {
+      log("İzin verilmedi (" + perm + "). Ayarlar > Bildirimler'den açabilirsin.");
+      btn.disabled = false;
+      return;
+    }
+    log("İzin verildi. Abonelik oluşturuluyor…");
+    return swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    }).then(function (sub) {
+      showSub(sub);
+      log("Abonelik oluşturuldu. JSON'u kopyalayıp Claude'a yapıştır.");
+      btn.disabled = false;
+    });
+  }).catch(function (err) {
+    log("Hata: " + (err && err.message ? err.message : err));
+    btn.disabled = false;
+    refresh();
+  });
+});
+
+// --- 2. Kopyala ---
+$("btn-copy").addEventListener("click", function () {
+  var ta = $("json");
+  if (!ta.value) { return; }
+  function done() { log("JSON panoya kopyalandı."); }
+  function fallback() {
+    ta.removeAttribute("readonly");
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    document.execCommand("copy");
+    ta.setAttribute("readonly", "");
+    done();
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value).then(done).catch(fallback);
+  } else {
+    fallback();
+  }
+});
+
+// --- Yerel test bildirimi (sunucuya dokunmadan) ---
+$("btn-local").addEventListener("click", function () {
+  if (!swReg) { return; }
+  swReg.showNotification("Yerel test", {
+    body: "Bu bildirim sunucudan gelmedi, sayfa açıkken gösterildi.",
+    icon: "/test/icon-180.png",
+    badge: "/test/icon-180.png",
+    tag: "yerel-test"
+  }).then(function () { log("Yerel bildirim gösterildi."); })
+    .catch(function (err) { log("Yerel bildirim hatası: " + err.message); });
+});
+
+// --- Abonelikten çık ---
+$("btn-unsub").addEventListener("click", function () {
+  if (!currentSub) { return; }
+  currentSub.unsubscribe().then(function () {
+    log("Abonelikten çıkıldı. Yeniden abone olabilirsin.");
+    showSub(null);
+  }).catch(function (err) { log("Çıkış hatası: " + err.message); });
+});
+
+// Uygulama öne geldiğinde durumu tazele.
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden) { refresh(); }
+});
+
+refresh();
+</script>
+</body>
+</html>

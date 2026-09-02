@@ -1,0 +1,26 @@
+{
+  "id": "/test/",
+  "name": "Push Testi",
+  "short_name": "Push Testi",
+  "description": "iOS kilit ekranina sunucudan web push bildirimi dusuyor mu testi.",
+  "start_url": "/test/",
+  "scope": "/test/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "/test/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/test/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
