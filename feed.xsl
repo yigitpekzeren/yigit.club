@@ -17,6 +17,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title><xsl:value-of select="channel/title"/> · RSS</title>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+        <script>
+          try {
+            if (localStorage.getItem("yigitclub_theme") === "light") {
+              document.documentElement.dataset.theme = "light";
+            }
+          } catch (e) {}
+        </script>
         <link rel="stylesheet" href="/css/style.css?v=13"/>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&amp;display=swap"/>
         <style>
