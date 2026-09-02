@@ -16,7 +16,9 @@ Istege bagli:
 import json
 import os
 import sys
+import traceback
 from datetime import datetime, timedelta, timezone
+from importlib.metadata import PackageNotFoundError, version
 
 try:
     from pywebpush import webpush, WebPushException
@@ -30,14 +32,53 @@ except ImportError:
 TR = timezone(timedelta(hours=3))
 
 
+def in_actions():
+    return os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def annotate(kind, title, message):
+    """GitHub Actions'ta bir annotation yazar.
+
+    Annotation'lar kosu sayfasinda, log'a girmeden de gorunur; bu yuzden
+    hatayi hem log'a hem oraya basiyoruz.
+    """
+    if not in_actions():
+        return
+    body = message.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+    print("::{kind} title={title}::{body}".format(kind=kind, title=title, body=body))
+
+
 def fail(message):
     """Anlasilir bir hata basip cikar."""
+    text = message.strip()
+    annotate("error", "Push gonderilemedi", text)
     print("\n" + "=" * 60)
     print("HATA")
     print("=" * 60)
-    print(message.strip())
+    print(text)
     print("=" * 60 + "\n")
     sys.exit(1)
+
+
+def surum_bilgisi():
+    """Kurulu paket surumlerini ve secret uzunluklarini ozetler.
+
+    Deger degil yalnizca uzunluk yazilir; secret'lar log'a sizmaz.
+    """
+    parcalar = []
+    for paket in ("pywebpush", "py_vapid", "cryptography", "http_ece"):
+        try:
+            parcalar.append("{0}={1}".format(paket, version(paket.replace("_", "-"))))
+        except PackageNotFoundError:
+            parcalar.append("{0}=yok".format(paket))
+
+    for name in ("VAPID_PRIVATE_KEY", "VAPID_SUBJECT", "PUSH_SUBSCRIPTION"):
+        deger = (os.environ.get(name) or "").strip()
+        parcalar.append("{0}={1} krkt".format(name, len(deger)))
+
+    return "python={0} | {1}".format(
+        sys.version.split()[0], " | ".join(parcalar)
+    )
 
 
 def read_env(name):
@@ -86,6 +127,13 @@ def parse_subscription(raw):
 
 
 def main():
+    # Ortam ozetini en basta yaz: bir sey patlarsa neyin kurulu oldugunu
+    # ve hangi secret'in bos kaldigini log'a girmeden gorebilelim.
+    ortam = surum_bilgisi()
+    print(ortam)
+    annotate("notice", "Ortam", ortam)
+    print()
+
     private_key = read_env("VAPID_PRIVATE_KEY")
     subject = read_env("VAPID_SUBJECT")
     subscription = parse_subscription(read_env("PUSH_SUBSCRIPTION"))
@@ -137,9 +185,10 @@ def main():
     except WebPushException as err:
         detail = ""
         status = None
-        if err.response is not None:
-            status = err.response.status_code
-            detail = (err.response.text or "").strip()
+        resp = getattr(err, "response", None)
+        if resp is not None:
+            status = getattr(resp, "status_code", None)
+            detail = (getattr(resp, "text", "") or "").strip()
 
         ipucu = {
             400: "Istek reddedildi. VAPID anahtar cifti ile aboneligin uretildigi\n"
@@ -167,7 +216,13 @@ def main():
             )
         )
     except Exception as err:  # noqa: BLE001 - log icin genis yakalama kasitli
-        fail("Beklenmeyen hata: {tur}: {err}".format(tur=type(err).__name__, err=err))
+        fail(
+            "Beklenmeyen hata: {tur}: {err}\n\n{iz}".format(
+                tur=type(err).__name__,
+                err=err,
+                iz=traceback.format_exc().strip(),
+            )
+        )
 
     print("Push servisi kabul etti. HTTP {0}".format(response.status_code))
     print()
