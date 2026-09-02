@@ -270,6 +270,11 @@ nav a:hover {
   gap: 16px;
 }
 
+/* Boş/hata durumu metinleri: sabit renk yerine tema değişkeni */
+.bos-durum {
+  color: var(--muted);
+}
+
 .kart {
   position: relative;
   background-color: var(--surface);

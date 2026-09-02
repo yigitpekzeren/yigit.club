@@ -157,7 +157,13 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
     if (subcategory) posts = posts.filter((p) => p.subcategory === subcategory);
 
     if (posts.length === 0) {
-      container.innerHTML = '<p style="color:#a1a1aa;">Bu kategoride henüz yazı yok.</p>';
+      // Ana sayfa bir kategori değil; mesaj bulunulan yere göre değişsin.
+      const mesaj = subcategory
+        ? "Bu alt kategoride henüz yazı yok."
+        : category
+        ? "Bu kategoride henüz yazı yok."
+        : "Henüz yazı yok.";
+      container.innerHTML = `<p class="bos-durum">${mesaj}</p>`;
       return;
     }
 
@@ -165,7 +171,7 @@ async function renderGrid(containerSelector, { pathPrefix = "" } = {}) {
       .map((p, i) => kartHTML(p, pathPrefix, i === 0 && !category && !subcategory, categories))
       .join("");
   } catch (e) {
-    container.innerHTML = '<p style="color:#a1a1aa;">Yazılar yüklenemedi.</p>';
+    container.innerHTML = '<p class="bos-durum">Yazılar yüklenemedi.</p>';
     console.error(e);
   }
 }
@@ -247,7 +253,7 @@ async function renderPost(containerSelector) {
 
   const slug = new URLSearchParams(window.location.search).get("slug");
   if (!slug) {
-    container.innerHTML = '<p style="color:#a1a1aa;">Yazı bulunamadı.</p>';
+    container.innerHTML = '<p class="bos-durum">Yazı bulunamadı.</p>';
     return;
   }
 
@@ -293,7 +299,7 @@ async function renderPost(containerSelector) {
     }
   } catch (e) {
     document.title = "Yazı bulunamadı | yigit.club";
-    container.innerHTML = '<p style="color:#a1a1aa;">Yazı yüklenemedi.</p>';
+    container.innerHTML = '<p class="bos-durum">Yazı yüklenemedi.</p>';
     console.error(e);
   }
 }

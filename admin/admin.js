@@ -279,7 +279,7 @@ function kategoriPageTemplate(slug, label) {
     <meta property="og:image" content="https://yigit.club/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="alternate" type="application/rss+xml" title="yigit.club" href="/feed.xml">
-    <link rel="stylesheet" href="../css/style.css?v=12">
+    <link rel="stylesheet" href="../css/style.css?v=13">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
   </head>
   <body>
@@ -309,7 +309,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club · <a href="../hakkinda.html">hakkında</a> · <a href="/feed.xml">RSS</a></p>
     </footer>
 
-    <script src="../js/site.js?v=15"></script>
+    <script src="../js/site.js?v=16"></script>
     <script>
       initTheme();
       initLogoTyping();
