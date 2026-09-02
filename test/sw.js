@@ -1,5 +1,14 @@
 /* Push testi service worker.
-   Tek isi: sunucudan gelen push olayini yakalayip bildirim gostermek. */
+   Tek isi: sunucudan gelen push olayini yakalayip bildirim gostermek.
+
+   [TASINIR] BU DOSYANIN TAMAMI asil uygulamaya oldugu gibi tasinabilir.
+   Icinde teste ozel hicbir sey yok; yalnizca "/test/" yollarini kendi
+   uygulama yolunla degistir.
+
+   Bilerek yapilmayan iki sey var, boyle kalmali:
+   - fetch dinleyicisi YOK  -> hicbir ag istegini kesmiyor
+   - Cache API kullanimi YOK -> hicbir sey onbellege alinmiyor
+   Bu ikisi sayesinde service worker sitenin geri kalanina dokunmuyor. */
 
 const SW_VERSION = "push-testi-1";
 
@@ -46,10 +55,23 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
+/* Bildirim yukundeki url'i kendi originimizle sinirlar.
+   Bu yuku ancak ozel VAPID anahtarina sahip biri gonderebilir, yani
+   pratikte yalnizca biz. Yine de disari acilan bir kapi birakmiyoruz:
+   beklenmedik bir url gelirse uygulamanin kendi sayfasina duseriz. */
+function guvenliUrl(ham) {
+  try {
+    const u = new URL(ham || "/test/", self.location.origin);
+    return u.origin === self.location.origin ? u.href : "/test/";
+  } catch (err) {
+    return "/test/";
+  }
+}
+
 /* Bildirime dokununca uygulamayi one getir ya da ac. */
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = (event.notification.data && event.notification.data.url) || "/test/";
+  const target = guvenliUrl(event.notification.data && event.notification.data.url);
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {

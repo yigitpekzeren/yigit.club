@@ -114,22 +114,28 @@ var currentSub = null;
 
 function $(id) { return document.getElementById(id); }
 
+// [ISKELE] Ekrandaki kayıt kutusu. Asıl uygulamada gerekmez.
 function log(msg) {
   var t = new Date().toLocaleTimeString("tr-TR");
   $("log").textContent = "[" + t + "] " + msg + "\n" + $("log").textContent;
 }
 
+// [ISKELE] Kontrol tablosunun satırlarını boyar.
 function setRow(id, text, cls) {
   var el = $(id);
   el.textContent = text;
   el.className = "v " + (cls || "idle");
 }
 
+// [TASINIR] iOS için kritik kontrol: sayfa ana ekrandan mı açıldı?
+// Safari sekmesinde push hiç çalışmaz, bunu bilmeden hata aramak zaman kaybı.
 function isStandalone() {
   return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
          navigator.standalone === true;
 }
 
+// [TASINIR] VAPID public anahtarını subscribe()'in beklediği byte dizisine çevirir.
+// Standart parça, her web push uygulamasında bire bir aynısı gerekir.
 function urlBase64ToUint8Array(base64String) {
   var padding = new Array((4 - (base64String.length % 4)) % 4 + 1).join("=");
   var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -139,6 +145,8 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
+// [ISKELE] Tabloyu tazeler — ama FİKRİ taşınır: iOS'ta push beş ayrı şekilde
+// sessizce çalışmaz. Asıl uygulamada da küçük bir durum göstergesi bırak.
 function refresh() {
   var secure = window.isSecureContext;
   setRow("c-https", secure ? "güvenli (https)" : "güvensiz — push çalışmaz", secure ? "ok" : "bad");
@@ -167,13 +175,14 @@ function refresh() {
   $("btn-local").disabled = !(swReg && perm === "granted");
 }
 
+// [ISKELE] Aboneliği ekrandaki kutuya yazar.
 function showSub(sub) {
   currentSub = sub;
   $("json").value = sub ? JSON.stringify(sub.toJSON(), null, 2) : "";
   refresh();
 }
 
-// --- Service worker kaydı ---
+// --- [TASINIR] Service worker kaydı + varsa mevcut aboneliği okuma ---
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/test/sw.js", { scope: "/test/" })
     .then(function (reg) {
@@ -193,7 +202,8 @@ if ("serviceWorker" in navigator) {
   refresh();
 }
 
-// --- 1. İzin ver ve abone ol ---
+// --- [TASINIR] ÇEKİRDEK: izin iste, sonra abone ol. Asıl uygulamanın kalbi bu. ---
+// İzin isteği mutlaka bir dokunma olayının içinden çağrılmalı; iOS bunu şart koşuyor.
 $("btn-sub").addEventListener("click", function () {
   if (!("Notification" in window) || !("PushManager" in window)) {
     log("Bu tarayıcı push desteklemiyor. iOS'ta sayfayı ana ekrandan açtığından emin ol.");
@@ -232,7 +242,7 @@ $("btn-sub").addEventListener("click", function () {
   });
 });
 
-// --- 2. Kopyala ---
+// --- [ISKELE] JSON'u panoya kopyala ---
 $("btn-copy").addEventListener("click", function () {
   var ta = $("json");
   if (!ta.value) { return; }
@@ -252,7 +262,8 @@ $("btn-copy").addEventListener("click", function () {
   }
 });
 
-// --- Yerel test bildirimi (sunucuya dokunmadan) ---
+// --- [ISKELE] Yerel bildirim — ama hata ayıklarken çok işe yarar:
+// gelmiyorsa sorun service worker/izin tarafında, sunucuda değil. ---
 $("btn-local").addEventListener("click", function () {
   if (!swReg) { return; }
   swReg.showNotification("Yerel test", {
@@ -264,7 +275,7 @@ $("btn-local").addEventListener("click", function () {
     .catch(function (err) { log("Yerel bildirim hatası: " + err.message); });
 });
 
-// --- Abonelikten çık ---
+// --- [TASINIR] Abonelikten çıkış. Anahtar değişince yeniden abone olmak için gerekir. ---
 $("btn-unsub").addEventListener("click", function () {
   if (!currentSub) { return; }
   currentSub.unsubscribe().then(function () {

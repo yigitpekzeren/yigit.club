@@ -36,6 +36,7 @@ def in_actions():
     return os.environ.get("GITHUB_ACTIONS") == "true"
 
 
+# [ISKELE] GitHub Actions annotation'i. Teshis icin eklendi, asil uygulamada gerekmez.
 def annotate(kind, title, message):
     """GitHub Actions'ta bir annotation yazar.
 
@@ -60,6 +61,7 @@ def fail(message):
     sys.exit(1)
 
 
+# [ISKELE] Kosu ortamini ozetler. Teshis icin.
 def surum_bilgisi():
     """Kurulu paket surumlerini ve secret uzunluklarini ozetler.
 
@@ -81,6 +83,9 @@ def surum_bilgisi():
     )
 
 
+# [ISKELE] Uc degeri ortam degiskeninden okur.
+# Asil uygulamada DEGISECEK: abonelikler bir secret'ta degil, gercek bir
+# depoda duracak (bkz. test/README.md - cozulmesi gereken asil karar).
 def read_env(name):
     """Ortam degiskenini oku; bos ya da eksikse aciklamali hata ver."""
     value = (os.environ.get(name) or "").strip()
@@ -108,6 +113,8 @@ def read_env(name):
     return value
 
 
+# [TASINIR] Abonelik JSON'unun sekil dogrulamasi. endpoint + keys.p256dh + keys.auth
+# uclusu eksikse gonderim zaten calismaz; erken ve anlasilir sekilde patlamak iyidir.
 def parse_subscription(raw):
     """Subscription JSON'unu dogrula ve sozluk olarak dondur."""
     try:
@@ -187,6 +194,7 @@ def main():
     print()
 
     try:
+        # [TASINIR] CEKIRDEK gonderim cagrisi. Asil uygulamada da bire bir bu.
         response = webpush(
             subscription_info=subscription,
             data=json.dumps(payload, ensure_ascii=False),
@@ -203,6 +211,8 @@ def main():
             status = getattr(resp, "status_code", None)
             detail = (getattr(resp, "text", "") or "").strip()
 
+        # [TASINIR] HTTP kodu -> ne anlama geldigi. Uretimde en kritigi 410:
+        # abonelik olmus demektir, kaydi silip kullaniciyi yeniden abone etmelisin.
         ipucu = {
             400: "Istek reddedildi. VAPID anahtar cifti ile aboneligin uretildigi\n"
                  "public anahtar ayni mi? index.html'deki public anahtar degistiyse\n"
