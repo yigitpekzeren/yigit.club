@@ -81,9 +81,10 @@ async function renderNav(fetchPrefix, navPrefix) {
   if (!nav) return;
   try {
     const cats = await fetchCategories(fetchPrefix);
-    nav.innerHTML = cats
-      .map((c) => `<a href="${navPrefix}${encodeURIComponent(c.slug)}.html">${escapeHtml(c.label)}</a>`)
-      .join("");
+    nav.innerHTML =
+      cats
+        .map((c) => `<a href="${navPrefix}${encodeURIComponent(c.slug)}.html">${escapeHtml(c.label)}</a>`)
+        .join("") + `<a href="${fetchPrefix}hakkinda.html" class="nav-hakkinda">hakkında</a>`;
   } catch (e) {
     console.error(e);
   }
@@ -205,6 +206,65 @@ function entryHTML(entry) {
   `;
 }
 
+/* Sayfa istemcide oluşturulduğu için OG etiketlerini de burada güncelliyoruz.
+   Not: WhatsApp/X gibi paylaşım botları JavaScript çalıştırmadığından bunlar
+   yalnızca JS çalıştıran araçlara ulaşır; bot önizlemesi site geneli
+   etiketlere düşer. Yazı başına gerçek önizleme için her yazının kendi HTML
+   dosyasına ihtiyaç var (ayrı bir yapı değişikliği). */
+function setPostMeta(post) {
+  const duzMetin = (post.entries || [])
+    .map((e) =>
+      e.bodyFormat === "html"
+        ? new DOMParser().parseFromString(e.body || "", "text/html").body.textContent || ""
+        : e.body || ""
+    )
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const aciklama = post.imageCaption || duzMetin.slice(0, 160);
+
+  const ayarla = (secici, deger) => {
+    const el = document.querySelector(secici);
+    if (el && deger) el.setAttribute("content", deger);
+  };
+  ayarla('meta[property="og:title"]', `${post.title} — yigit.club`);
+  ayarla('meta[name="description"]', aciklama);
+  ayarla('meta[property="og:description"]', aciklama);
+  ayarla('meta[property="og:url"]', window.location.href);
+  if (post.image) ayarla('meta[property="og:image"]', new URL(post.image, window.location.href).href);
+}
+
+async function postNavHTML(currentSlug) {
+  let posts;
+  try {
+    posts = await fetchAllNotlar("");
+  } catch (e) {
+    return "";
+  }
+  const i = posts.findIndex((p) => p.slug === currentSlug);
+  if (i === -1) return "";
+
+  // Liste yeniden eskiye sıralı: bir önceki eleman daha yeni, sonraki daha eski.
+  const dahaYeni = i > 0 ? posts[i - 1] : null;
+  const dahaEski = i < posts.length - 1 ? posts[i + 1] : null;
+
+  const kutu = (post, etiket, konum) =>
+    post
+      ? `<a class="post-nav-link ${konum}" href="post.html?slug=${encodeURIComponent(post.slug)}">
+           <span class="post-nav-label">${etiket}</span>
+           <span class="post-nav-title">${escapeHtml(post.title)}</span>
+         </a>`
+      : `<span class="post-nav-link ${konum} bos"></span>`;
+
+  return `
+    <nav class="post-nav" aria-label="Yazılar arasında gezinme">
+      ${kutu(dahaEski, "← Daha eski", "post-nav-onceki")}
+      <a class="post-nav-home" href="index.html">Tüm yazılar</a>
+      ${kutu(dahaYeni, "Daha yeni →", "post-nav-sonraki")}
+    </nav>
+  `;
+}
+
 async function renderPost(containerSelector) {
   const container = document.querySelector(containerSelector);
   if (!container) return;
@@ -221,9 +281,11 @@ async function renderPost(containerSelector) {
     const post = await res.json();
 
     document.title = `${post.title} | yigit.club`;
+    setPostMeta(post);
 
     const categories = await fetchCategories("");
     const etiketHtml = kategoriEtiketHTML(post, "", categories);
+    const navHtml = await postNavHTML(slug);
 
     const entries = [...(post.entries || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
     const entriesHtml = entries.map(entryHTML).join("");
@@ -246,9 +308,10 @@ async function renderPost(containerSelector) {
           </div>
           <div class="post-foto-text">${entriesHtml}</div>
         </div>
+        ${navHtml}
       `;
     } else {
-      container.innerHTML = `${metaHtml}<div class="post-thread">${entriesHtml}</div>`;
+      container.innerHTML = `${metaHtml}<div class="post-thread">${entriesHtml}</div>${navHtml}`;
     }
   } catch (e) {
     document.title = "Yazı bulunamadı | yigit.club";

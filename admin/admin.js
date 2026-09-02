@@ -208,7 +208,17 @@ function kategoriPageTemplate(slug, label) {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="yigit.club">
     <title>${safeLabel} | yigit.club</title>
-    <link rel="stylesheet" href="../css/style.css?v=7">
+    <meta name="description" content="${safeLabel} kategorisindeki yazılar — yigit.club">
+    <link rel="canonical" href="https://yigit.club/kategori/${slug}.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="yigit.club">
+    <meta property="og:locale" content="tr_TR">
+    <meta property="og:title" content="${safeLabel} — yigit.club">
+    <meta property="og:description" content="${safeLabel} kategorisindeki yazılar — yigit.club">
+    <meta property="og:url" content="https://yigit.club/kategori/${slug}.html">
+    <meta property="og:image" content="https://yigit.club/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="../css/style.css?v=9">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
   </head>
   <body>
@@ -238,7 +248,7 @@ function kategoriPageTemplate(slug, label) {
       <p>yigit.club</p>
     </footer>
 
-    <script src="../js/site.js?v=11"></script>
+    <script src="../js/site.js?v=12"></script>
     <script>
       initTheme();
       initLogoTyping();
@@ -657,6 +667,7 @@ async function onTokenSubmit(e) {
 function dashboardHTML() {
   return `
     <div class="admin-dashboard">
+      <div id="autosave-slot"></div>
       <div class="admin-columns-3">
         <section class="admin-col-meta">
           <h2 id="form-title">Yeni Yazı</h2>
@@ -949,6 +960,7 @@ async function handleSaveDraft() {
 
     await loadDrafts();
     renderDrafts();
+    clearAutosave();
     showToast("Taslak kaydedildi.");
   } catch (err) {
     showToast(err.message, true);
@@ -1073,6 +1085,7 @@ function resetForm() {
   document.getElementById("draft-save-btn").style.display = "";
   document.getElementById("form-error").textContent = "";
   document.getElementById("f-body").innerHTML = "";
+  clearAutosave();
   updatePhotoBlockVisibility();
 }
 
@@ -1396,6 +1409,121 @@ async function loadPosts() {
   }
 }
 
+/* ---------- otomatik kaydetme ----------
+   Uzun bir girdi yazarken sekme kapanırsa / sayfa yenilenirse içerik kaybolmasın.
+   Yazılanlar tarayıcıda saklanır; panel yeniden açıldığında geri yükleme önerilir.
+   Başarılı yayın/taslak kaydı ve formun temizlenmesi bu kaydı siler. */
+
+const AUTOSAVE_KEY = "yigitclub_admin_autosave";
+let __autosaveTimer = null;
+
+function autosaveAnliktGoruntu() {
+  const v = (id) => (document.getElementById(id) || {}).value || "";
+  return {
+    zaman: Date.now(),
+    mode: uiState.mode,
+    targetSlug: uiState.targetSlug,
+    editingEntryIndex: uiState.editingEntryIndex,
+    draftSlug: uiState.draftSlug,
+    title: v("f-title"),
+    slug: v("f-slug"),
+    category: v("f-category"),
+    subcategory: v("f-subcategory"),
+    stage: v("f-stage"),
+    datetime: v("f-datetime"),
+    imageCaption: v("f-image-caption"),
+    body: (document.getElementById("f-body") || {}).innerHTML || "",
+  };
+}
+
+function autosaveDoluMu(s) {
+  if (!s) return false;
+  const govde = (s.body || "").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+  return Boolean((s.title || "").trim() || govde);
+}
+
+function scheduleAutosave() {
+  clearTimeout(__autosaveTimer);
+  __autosaveTimer = setTimeout(() => {
+    try {
+      const anlik = autosaveAnliktGoruntu();
+      if (autosaveDoluMu(anlik)) localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(anlik));
+      else localStorage.removeItem(AUTOSAVE_KEY);
+    } catch (e) {
+      /* depolama kotası dolabilir; otomatik kayıt kritik değil */
+    }
+  }, 700);
+}
+
+function clearAutosave() {
+  clearTimeout(__autosaveTimer);
+  try {
+    localStorage.removeItem(AUTOSAVE_KEY);
+  } catch (e) {}
+  const bar = document.getElementById("autosave-bar");
+  if (bar) bar.remove();
+}
+
+function autosaveGeriYukle(s) {
+  const varOlanYazi = s.targetSlug && state.posts.some((p) => p.slug === s.targetSlug);
+  const varOlanTaslak = s.draftSlug && state.drafts.some((d) => d.slug === s.draftSlug);
+
+  if (s.mode === "add-entry" && varOlanYazi) startAddEntry(s.targetSlug);
+  else if (s.mode === "edit-entry" && varOlanYazi) startEditEntry(s.targetSlug, s.editingEntryIndex);
+  else if (s.mode === "edit-meta" && varOlanYazi) startEditMeta(s.targetSlug);
+  else if (varOlanTaslak) startEditDraft(s.draftSlug);
+
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val) el.value = val;
+  };
+  set("f-title", s.title);
+  set("f-slug", s.slug);
+  set("f-category", s.category);
+  set("f-subcategory", s.subcategory);
+  set("f-stage", s.stage);
+  set("f-image-caption", s.imageCaption);
+  if (s.datetime) {
+    document.getElementById("f-datetime").value = s.datetime;
+    updateDatetimeDisplay();
+  }
+  if (s.body) document.getElementById("f-body").innerHTML = s.body;
+  if (s.slug) uiState.slugTouched = true;
+  updatePhotoBlockVisibility();
+  clearAutosave();
+  showToast("Kaydedilmemiş içerik geri yüklendi.");
+}
+
+function autosaveTeklifiGoster() {
+  let anlik = null;
+  try {
+    anlik = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || "null");
+  } catch (e) {
+    return;
+  }
+  if (!autosaveDoluMu(anlik)) return;
+
+  const slot = document.getElementById("autosave-slot");
+  if (!slot) return;
+
+  const baslik = (anlik.title || "").trim() || "(başlıksız)";
+  const zaman = new Date(anlik.zaman).toLocaleString("tr-TR", {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+  });
+
+  slot.innerHTML = `
+    <div id="autosave-bar" class="autosave-bar">
+      <span>Kaydedilmemiş içerik bulundu — <strong>${escapeHtml(baslik)}</strong> · ${escapeHtml(zaman)}</span>
+      <div class="autosave-bar-actions">
+        <button type="button" id="autosave-restore">Geri Yükle</button>
+        <button type="button" id="autosave-discard" class="btn-secondary">Yoksay</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("autosave-restore").addEventListener("click", () => autosaveGeriYukle(anlik));
+  document.getElementById("autosave-discard").addEventListener("click", clearAutosave);
+}
+
 /* ---------- yazı dizini (manifest) ----------
    Site, yazı listesini GitHub API'si yerine bu tek dosyadan okur.
    Böylece ziyaretçi tarafında API limiti (60 istek/saat/IP) devreye girmez
@@ -1493,6 +1621,14 @@ function wireDashboard() {
   });
   document.execCommand("defaultParagraphSeparator", false, "p");
 
+  ["f-title", "f-slug", "f-category", "f-subcategory", "f-stage", "f-image-caption"].forEach((id) => {
+    const el = document.getElementById(id);
+    el.addEventListener("input", scheduleAutosave);
+    el.addEventListener("change", scheduleAutosave);
+  });
+  document.getElementById("f-body").addEventListener("input", scheduleAutosave);
+  document.getElementById("f-datetime").addEventListener("input", scheduleAutosave);
+
   document.getElementById("f-body").addEventListener("paste", (e) => {
     e.preventDefault();
     const pano = e.clipboardData;
@@ -1558,6 +1694,7 @@ async function renderRoot() {
   renderArchive();
   await loadDrafts();
   renderDrafts();
+  autosaveTeklifiGoster();
 }
 
 function initAdmin() {
