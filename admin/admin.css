@@ -381,6 +381,32 @@
   font-size: 16px;
 }
 
+.draft-kurulum {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.draft-kurulum p {
+  margin: 0 0 10px;
+}
+
+.draft-kurulum ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.draft-kurulum li {
+  margin-bottom: 6px;
+}
+
+.draft-kurulum code {
+  background-color: var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
 .draft-item {
   display: flex;
   justify-content: space-between;

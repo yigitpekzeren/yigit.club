@@ -1,5 +1,11 @@
 const REPO = "yigitpekzeren/yigit.club";
 const BRANCH = "main";
+
+/* Taslaklar AYRI ve GİZLİ bir depoda tutulur.
+   Site deposu herkese açık olduğu için oraya yazılan her şey (silinse bile
+   git geçmişinde) herkes tarafından okunabilir olurdu. Yayınlanmamış yazılar
+   bu yüzden hiç oraya yazılmıyor. */
+const DRAFTS_REPO = "yigitpekzeren/yigit.club-taslaklar";
 const POSTS_FOLDER = "notlar-data";
 const INDEX_FILENAME = "index.json";
 const SEARCH_FILENAME = "arama.json";
@@ -12,7 +18,7 @@ const TOKEN_KEY = "yigitclub_admin_token";
 const CROP_W = 320;
 const CROP_H = 240;
 
-const state = { posts: [], drafts: [], categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null, hakkindaSha: null };
+const state = { posts: [], drafts: [], draftsRepoHazir: null, categories: [], categoriesSha: null, croppedBlob: null, ozetSha: null, hakkindaSha: null };
 const uiState = { mode: "new-post", targetSlug: null, targetSha: null, targetPost: null, slugTouched: false, editingEntryIndex: null, draftSlug: null, draftSha: null };
 const cropState = { img: null, scale: 1, offsetX: 0, offsetY: 0, naturalW: 0, naturalH: 0, dragging: false, lastX: 0, lastY: 0 };
 
@@ -75,6 +81,11 @@ function formatDateTimeAdmin(iso) {
   return new Date(iso).toLocaleString("tr-TR", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function base64ToBlob(b64, type = "image/jpeg") {
+  const binary = atob(b64);
+  return new Blob([Uint8Array.from(binary, (c) => c.charCodeAt(0))], { type });
+}
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -84,24 +95,24 @@ function fileToBase64(file) {
   });
 }
 
-async function ghGetFile(path) {
-  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`, { headers: ghHeaders() });
+async function ghGetFile(path, repo = REPO) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${BRANCH}`, { headers: ghHeaders() });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub API hatası (${res.status})`);
   return res.json();
 }
 
-async function ghListFolder(path) {
-  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`, { headers: ghHeaders() });
+async function ghListFolder(path, repo = REPO) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${BRANCH}`, { headers: ghHeaders() });
   if (res.status === 404) return [];
   if (!res.ok) throw new Error(`GitHub API hatası (${res.status})`);
   return res.json();
 }
 
-async function ghPutFile(path, contentBase64, message, sha) {
+async function ghPutFile(path, contentBase64, message, sha, repo = REPO) {
   const body = { message, content: contentBase64, branch: BRANCH };
   if (sha) body.sha = sha;
-  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
     method: "PUT",
     headers: { ...ghHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -113,8 +124,8 @@ async function ghPutFile(path, contentBase64, message, sha) {
   return res.json();
 }
 
-async function ghDeleteFile(path, sha, message) {
-  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+async function ghDeleteFile(path, sha, message, repo = REPO) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
     method: "DELETE",
     headers: { ...ghHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ message, sha, branch: BRANCH }),
@@ -124,6 +135,15 @@ async function ghDeleteFile(path, sha, message) {
     throw new Error(err.message || `GitHub API hatası (${res.status})`);
   }
   return res.json();
+}
+
+async function ghDepoErisilebilirMi(repo) {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}`, { headers: ghHeaders() });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function uploadImage(file) {
@@ -896,6 +916,22 @@ function archiveExpandedHTML(p) {
 }
 
 function draftsHTML() {
+  if (state.draftsRepoHazir === false) {
+    return `
+      <div class="draft-kurulum">
+        <p><strong>Taslaklar için gizli depo gerekiyor.</strong></p>
+        <p>Yayınlanmamış yazıların herkese açık olmaması için taslaklar ayrı ve
+        <em>private</em> bir depoda tutuluyor. Henüz erişilemiyor.</p>
+        <ol>
+          <li>GitHub'da <code>${escapeHtml(DRAFTS_REPO.split("/")[1])}</code> adıyla
+              <strong>private</strong> bir depo oluştur (README ekleyerek).</li>
+          <li>Token'ın bu depoya da erişebildiğinden emin ol.</li>
+          <li>Bu sayfayı yenile.</li>
+        </ol>
+        <p class="hint">O zamana kadar yayınlama ve diğer her şey normal çalışır.</p>
+      </div>
+    `;
+  }
   if (state.drafts.length === 0) {
     return '<p style="color:#a1a1aa;">Taslak yok.</p>';
   }
@@ -934,18 +970,29 @@ function onDraftsClick(e) {
 
 async function loadDrafts() {
   try {
-    const files = (await ghListFolder(DRAFTS_FOLDER)).filter((f) => f.name.endsWith(".json"));
+    const files = (await ghListFolder(DRAFTS_FOLDER, DRAFTS_REPO)).filter((f) => f.name.endsWith(".json"));
+
+    if (files.length === 0) {
+      // Boş liste "henüz taslak yok" da olabilir, "depo yok/erişilemiyor" da.
+      state.draftsRepoHazir = await ghDepoErisilebilirMi(DRAFTS_REPO);
+      state.drafts = [];
+      return;
+    }
+
+    // Gizli depoda download_url kimlik doğrulama istediği için içerik API'den okunur.
     const drafts = await Promise.all(
       files.map(async (f) => {
-        const res = await fetch(`${f.download_url}?t=${Date.now()}`);
-        const data = await res.json();
-        return { ...data, slug: f.name.replace(/\.json$/, ""), sha: f.sha };
+        const dosya = await ghGetFile(`${DRAFTS_FOLDER}/${f.name}`, DRAFTS_REPO);
+        const data = JSON.parse(base64ToUtf8(dosya.content));
+        return { ...data, slug: f.name.replace(/\.json$/, ""), sha: dosya.sha };
       })
     );
     drafts.sort((a, b) => new Date(b.date) - new Date(a.date));
     state.drafts = drafts;
+    state.draftsRepoHazir = true;
   } catch (e) {
     state.drafts = [];
+    state.draftsRepoHazir = false;
   }
 }
 
@@ -977,17 +1024,21 @@ async function handleSaveDraft() {
       if (!state.croppedBlob && fileInput.files[0] && cropState.img) {
         state.croppedBlob = await cropToBlob();
       }
-      if (state.croppedBlob) {
-        const file = new File([state.croppedBlob], `${slug}.jpg`, { type: "image/jpeg" });
-        image = await uploadImage(file);
-      }
+    }
+
+    /* Taslaktaki görsel açık depoya yüklenmez; yayınlanana kadar taslağın
+       kendi içinde (gizli depoda) base64 olarak durur. Yükleme yalnızca
+       yayınlama anında, onPostSubmit içinde yapılır. */
+    let imageData = "";
+    if (category === "fotograf" && state.croppedBlob) {
+      imageData = await fileToBase64(state.croppedBlob);
     }
 
     const path = `${DRAFTS_FOLDER}/${slug}.json`;
-    const sha = uiState.draftSlug === slug ? uiState.draftSha : (await ghGetFile(path))?.sha;
-    const draft = { title, date: isoDatetime, category, subcategory, stage, image, imageCaption, body, bodyFormat: "html" };
+    const sha = uiState.draftSlug === slug ? uiState.draftSha : (await ghGetFile(path, DRAFTS_REPO))?.sha;
+    const draft = { title, date: isoDatetime, category, subcategory, stage, image, imageCaption, body, bodyFormat: "html", imageData };
     const content = utf8ToBase64(JSON.stringify(draft, null, 2) + "\n");
-    const res = await ghPutFile(path, content, `Taslak kaydet: ${slug}`, sha);
+    const res = await ghPutFile(path, content, `Taslak kaydet: ${slug}`, sha, DRAFTS_REPO);
 
     uiState.draftSlug = slug;
     uiState.draftSha = res.content.sha;
@@ -1039,7 +1090,14 @@ function startEditDraft(slug) {
 
   const preview = document.getElementById("photo-preview");
   const previewLabel = document.getElementById("photo-preview-label");
-  if (d.image) {
+  if (d.imageData) {
+    // Taslağın içinde saklanan görsel; yayınlanınca açık depoya yüklenecek.
+    state.croppedBlob = base64ToBlob(d.imageData);
+    preview.src = `data:image/jpeg;base64,${d.imageData}`;
+    preview.style.display = "";
+    previewLabel.textContent = "Taslaktaki görsel (yayınlanınca yüklenecek):";
+    previewLabel.style.display = "";
+  } else if (d.image) {
     preview.src = `../${d.image}`;
     preview.style.display = "";
     previewLabel.textContent = "Mevcut görsel:";
@@ -1062,7 +1120,7 @@ function startEditDraft(slug) {
 async function handleDeleteDraft(slug, sha) {
   if (!confirm(`"${slug}" taslağını kalıcı olarak silmek istediğine emin misin?`)) return;
   try {
-    await ghDeleteFile(`${DRAFTS_FOLDER}/${slug}.json`, sha, `Taslak sil: ${slug}`);
+    await ghDeleteFile(`${DRAFTS_FOLDER}/${slug}.json`, sha, `Taslak sil: ${slug}`, DRAFTS_REPO);
     if (uiState.draftSlug === slug) {
       uiState.draftSlug = null;
       uiState.draftSha = null;
@@ -1393,7 +1451,7 @@ async function onPostSubmit(e) {
 
     if (uiState.mode === "new-post" && uiState.draftSlug) {
       try {
-        await ghDeleteFile(`${DRAFTS_FOLDER}/${uiState.draftSlug}.json`, uiState.draftSha, `Taslak silindi (yayınlandı): ${uiState.draftSlug}`);
+        await ghDeleteFile(`${DRAFTS_FOLDER}/${uiState.draftSlug}.json`, uiState.draftSha, `Taslak silindi (yayınlandı): ${uiState.draftSlug}`, DRAFTS_REPO);
       } catch (e) {
         /* taslak temizliği başarısız olsa da yayın işlemi tamamlandı */
       }
