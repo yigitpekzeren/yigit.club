@@ -1,5 +1,15 @@
 [
   {
+    "slug": "kos-a-mamak-uzerine",
+    "title": "Koş(a)mamak Üzerine",
+    "date": "2026-09-03T15:12:00.000Z",
+    "category": "hobiler",
+    "subcategory": "koşu",
+    "stage": "🫘 Çekirdek",
+    "image": "",
+    "imageCaption": ""
+  },
+  {
     "slug": "kosmak-uzerine",
     "title": "Koşmak Üzerine",
     "date": "2026-09-03T14:40:00.000Z",
@@ -25,7 +35,7 @@
     "date": "2026-09-01T10:00",
     "category": "genel",
     "subcategory": "",
-    "stage": "🫘 Çekirdek",
+    "stage": "⏳ Demleniyor",
     "image": "",
     "imageCaption": ""
   }
