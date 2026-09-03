@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <script>
+      try {
+        if (localStorage.getItem("yigitclub_theme") === "light") {
+          document.documentElement.dataset.theme = "light";
+        }
+      } catch (e) {}
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="yigit.club">
+    <title>sanat | yigit.club</title>
+    <meta name="description" content="sanat kategorisindeki yazılar — yigit.club">
+    <link rel="canonical" href="https://yigit.club/kategori/sanat.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="yigit.club">
+    <meta property="og:locale" content="tr_TR">
+    <meta property="og:title" content="sanat — yigit.club">
+    <meta property="og:description" content="sanat kategorisindeki yazılar — yigit.club">
+    <meta property="og:url" content="https://yigit.club/kategori/sanat.html">
+    <meta property="og:image" content="https://yigit.club/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="alternate" type="application/rss+xml" title="yigit.club" href="/feed.xml">
+    <link rel="stylesheet" href="../css/style.css?v=13">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,600&display=swap">
+  </head>
+  <body>
+
+    <header>
+      <a href="../index.html" class="logo" id="site-logo" aria-label="yigit.club">
+        <span class="logo-bold"></span><span class="logo-italic"></span><span class="logo-cursor"></span>
+      </a>
+      <button id="menu-toggle" class="menu-toggle" aria-label="Menü">☰</button>
+      <div class="header-right" id="header-right">
+        <nav id="site-nav"></nav>
+        <div class="nav-search">
+          <input type="search" id="site-search" placeholder="Ara...">
+          <div id="search-results" class="search-results"></div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Tema değiştir"></button>
+      </div>
+    </header>
+
+    <h1 class="kategori-baslik" style="margin-bottom: 24px;">sanat</h1>
+
+    <div class="grid" id="posts-grid" data-category="sanat">
+      <p style="color:#a1a1aa;">Yükleniyor...</p>
+    </div>
+
+    <footer>
+      <p>yigit.club · <a href="../hakkinda.html">hakkında</a> · <a href="/feed.xml">RSS</a></p>
+    </footer>
+
+    <script src="../js/site.js?v=16"></script>
+    <script>
+      initTheme();
+      initLogoTyping();
+      initMobileMenu();
+      renderNav("../", "");
+      initSearch("../");
+      renderGrid("#posts-grid", { pathPrefix: "../" });
+    </script>
+
+  </body>
+</html>
