@@ -1,8 +1,12 @@
 name: Bildirim
 
-# Iki yolla calisir:
-#  - workflow_dispatch: Actions sekmesinden elle "Run workflow"
-#  - schedule: her gun 18:00 UTC = 21:00 Turkiye saati
+# Yalnizca elle calisir: Actions sekmesinden "Run workflow".
+#
+# Gunluk zamanlama 2026-10-26'da kaldirildi. Test amacini tamamlamisti ve
+# her aksam gelen bos bildirim artik ise yaramiyordu.
+# Geri istersen asagiya sunu eklemek yeterli:
+#   schedule:
+#     - cron: "0 18 * * *"
 on:
   workflow_dispatch:
     inputs:
@@ -14,8 +18,6 @@ on:
         description: "Bildirim metni (bos birakilirsa varsayilan kullanilir)"
         required: false
         default: ""
-  schedule:
-    - cron: "0 18 * * *"
 
 # Bu is depoya yazmiyor, sadece okuyor.
 permissions:
